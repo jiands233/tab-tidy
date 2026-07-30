@@ -87,7 +87,7 @@ export function validateModelGroups(payload, knownTabIds) {
     if (tabIds.length < 2) continue;
 
     tabIds.forEach((tabId) => claimedTabIds.add(tabId));
-    const title = String(candidate.title || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    const title = String(candidate.title || '').replace(/\s+/g, ' ').trim().slice(0, 12);
     validGroups.push({ title: title || '未命名分组', tabIds });
   }
   return validGroups;

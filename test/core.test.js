@@ -51,3 +51,12 @@ test('validates model groups against known tab IDs and ignores singleton groups'
 
   assert.deepEqual(groups, [{ title: 'Research', tabIds: [11, 12] }]);
 });
+
+test('shortens an overly long model group title to twelve characters', () => {
+  const groups = validateModelGroups(
+    { groups: [{ title: '人工智能招聘行业深度研究资料', tabIds: [21, 22] }] },
+    new Set([21, 22]),
+  );
+
+  assert.deepEqual(groups, [{ title: '人工智能招聘行业深度研究', tabIds: [21, 22] }]);
+});

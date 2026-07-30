@@ -27,7 +27,7 @@ export async function requestTabGroups({ apiKey, tabs, fetchImpl = fetch }) {
         messages: [
           {
             role: 'system',
-            content: '你是浏览器标签页整理助手。按主题或工作任务分组，只输出 JSON 对象：{"groups":[{"title":"不超过40字的中文标题","tabIds":[1,2]}]}。每个 tabId 最多出现一次；每组至少两个 tabId；无法归类的标签不要输出；绝不编造 tabId，也不要输出解释。',
+            content: '你是浏览器标签页整理助手。按主题或工作任务分组，只输出 JSON 对象：{"groups":[{"title":"不超过12字的简短中文主题词","tabIds":[1,2]}]}。标题只用核心名词，不写句子、说明或标点。每个 tabId 最多出现一次；每组至少两个 tabId；无法归类的标签不要输出；绝不编造 tabId，也不要输出解释。',
           },
           { role: 'user', content: JSON.stringify({ tabs }) },
         ],
