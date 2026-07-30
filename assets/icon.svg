@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="标签页整理">
+  <path d="M116 124h168l72 72v154c0 24-20 44-44 44H160c-24 0-44-20-44-44V124Z" fill="none" stroke="#181412" stroke-linejoin="round" stroke-width="42"/>
+  <path d="M184 196h144l68 68v106c0 24-20 44-44 44H228c-24 0-44-20-44-44V196Z" fill="#f8f5ef" stroke="#181412" stroke-linejoin="round" stroke-width="42"/>
+  <circle cx="352" cy="370" r="30" fill="#aa3040"/>
+</svg>

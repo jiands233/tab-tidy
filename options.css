@@ -1,0 +1,28 @@
+:root {
+  color: #1d1d1f;
+  font-family: "PingFang SC", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-optical-sizing: auto;
+}
+
+* { box-sizing: border-box; }
+body { background: #f8f7f5; margin: 0; }
+main { margin: 0 auto; max-width: 600px; padding: 76px 28px; }
+header { align-items: center; display: flex; margin-bottom: 24px; }
+.brand-mark { display: block; height: 32px; width: 32px; }
+h1 { font-family: "PingFang SC", "SF Pro Display", "Helvetica Neue", Arial, sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -.055em; line-height: 1.15; margin: 0; }
+.intro { color: #6b6863; font-size: 14px; line-height: 1.6; margin: 10px 0 0; }
+.card { background: #fff; border: 1px solid #e4e1dc; border-radius: 20px; box-shadow: 0 14px 34px #3c34230d; margin-top: 30px; padding: 24px; }
+.saved-key { color: #6b6863; font-size: 12px; font-weight: 600; margin: 0 0 22px; }
+label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+input { background: #fff; border: 1px solid #dfddd9; border-radius: 12px; font: inherit; outline: 0; padding: 12px; transition: border-color 160ms ease, box-shadow 160ms ease; width: 100%; }
+input:focus { border-color: #aa3040; box-shadow: 0 0 0 3px #aa30401a; }
+button { background: #efedea; border: 1px solid #dfdbd6; border-radius: 11px; color: #242424; cursor: pointer; font: inherit; font-size: 13px; font-weight: 650; margin-top: 13px; padding: 11px 15px; transition: background-color 160ms ease, transform 100ms ease-out; }
+button:hover { background: #e8e4df; }
+button:active { transform: scale(.98); }
+.danger { background: transparent; border-color: #e0d7d3; color: #8b4a52; float: right; font-size: 12px; }
+.danger:hover { background: #f7edec; color: #8b4a52; }
+#feedback { color: #aa3040; font-size: 12px; min-height: 20px; }
+
+@media (prefers-reduced-motion: reduce) {
+  input, button { transition: none; }
+}
