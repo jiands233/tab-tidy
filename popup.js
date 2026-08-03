@@ -46,12 +46,14 @@ function renderResult(lastResult, undoAvailable, isOrganizing) {
 
 async function render() {
   const status = await request({ type: 'getStatus' });
+  const runtimeReady = status.runtimeVersion === chrome.runtime.getManifest().version;
   setup.hidden = status.hasApiKey;
   ready.hidden = !status.hasApiKey;
-  organizeButton.disabled = status.isOrganizing;
+  organizeButton.disabled = status.isOrganizing || !runtimeReady;
   organizeButton.querySelector('span').textContent = status.isOrganizing ? '正在整理…' : '开始整理';
-  organizeButton.querySelector('b').hidden = status.isOrganizing;
-  renderResult(status.lastResult, status.undoAvailable, status.isOrganizing);
+  organizeButton.querySelector('b').hidden = status.isOrganizing || !runtimeReady;
+  renderResult(status.lastResult, status.undoAvailable, status.isOrganizing || !runtimeReady);
+  if (!runtimeReady) setFeedback('请在扩展管理页重新加载后再试。');
 }
 
 async function organize() {
@@ -86,7 +88,11 @@ async function undoLastOperation() {
   try {
     const operation = await request({ type: 'undo' });
     await render();
-    setFeedback(`已恢复 ${operation.restoredTabs} 个 · 重开 ${operation.reopenedTabs} 个 · 跳过 ${operation.skippedTabs} 个`);
+    const hasDetailedResult = [operation.restoredTabs, operation.reopenedTabs, operation.skippedTabs]
+      .every(Number.isInteger);
+    setFeedback(hasDetailedResult
+      ? `已恢复 ${operation.restoredTabs} 个 · 重开 ${operation.reopenedTabs} 个 · 跳过 ${operation.skippedTabs} 个`
+      : operation.message || '已撤销本次整理。');
   } catch (error) {
     setFeedback(error.code === 'BUSY' ? '正在整理，请稍候。' : error.message);
     if (undoButton) undoButton.disabled = false;

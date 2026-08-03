@@ -121,6 +121,7 @@ async function getStatus() {
     snapshot = null;
   }
   return {
+    runtimeVersion: chrome.runtime.getManifest().version,
     hasApiKey: Boolean(values[STORAGE_KEYS.apiKey]),
     maskedApiKey: values[STORAGE_KEYS.apiKey] ? maskKey(values[STORAGE_KEYS.apiKey]) : null,
     undoAvailable: Boolean(snapshot),
