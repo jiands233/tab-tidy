@@ -41,15 +41,37 @@ test('validates model groups against known tab IDs and ignores singleton groups'
   const groups = validateModelGroups(
     {
       groups: [
-        { title: 'Research', tabIds: [11, 12, 99] },
+        { title: 'Research', tabIds: [11, 12] },
         { title: 'Single', tabIds: [13] },
-        { title: 'Repeated', tabIds: [12, 14] },
       ],
     },
     new Set([11, 12, 13, 14]),
   );
 
   assert.deepEqual(groups, [{ title: 'Research', tabIds: [11, 12] }]);
+});
+
+test('rejects malformed model groups instead of silently filtering them', () => {
+  const knownIds = new Set([1, 2, 3]);
+  const invalidPayloads = [
+    null,
+    { groups: 'not-an-array' },
+    { groups: [null] },
+    { groups: [{ title: 42, tabIds: [1, 2] }] },
+    { groups: [{ title: '   ', tabIds: [1, 2] }] },
+    { groups: [{ title: 'Work', tabIds: '1,2' }] },
+    { groups: [{ title: 'Work', tabIds: [1, 2.5] }] },
+    { groups: [{ title: 'Work', tabIds: [1, 9] }] },
+    { groups: [{ title: 'Work', tabIds: [1, 1] }] },
+    { groups: [{ title: 'One', tabIds: [1] }, { title: 'Two', tabIds: [1, 2] }] },
+  ];
+
+  for (const payload of invalidPayloads) {
+    assert.throws(
+      () => validateModelGroups(payload, knownIds),
+      (error) => error.code === 'AI_INVALID_RESPONSE',
+    );
+  }
 });
 
 test('shortens an overly long model group title to twelve characters', () => {

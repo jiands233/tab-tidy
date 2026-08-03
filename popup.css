@@ -33,6 +33,7 @@ input:focus { border-color: #aa3040; box-shadow: 0 0 0 3px #aa30401a; }
 .secondary { background: #fff; border: 1px solid #dbd6d0; border-radius: 9px; color: #55504b; cursor: pointer; font-size: 11px; font-weight: 600; margin-top: 13px; padding: 7px 10px; transition: background-color 160ms ease, transform 100ms ease-out; }
 .secondary:hover { background: #f0ece7; }
 .secondary:active { transform: scale(.97); }
+.secondary:disabled { cursor: progress; opacity: .58; }
 .feedback { color: #aa3040; font-size: 11px; line-height: 1.5; margin: 13px 0 0; min-height: 0; }
 
 @media (prefers-reduced-motion: reduce) {

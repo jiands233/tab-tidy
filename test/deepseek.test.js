@@ -33,6 +33,51 @@ test('surfaces a usable DeepSeek API error without exposing the API key', async 
       tabs: [],
       fetchImpl: async () => new Response(JSON.stringify({ error: { message: 'Invalid API key' } }), { status: 401 }),
     }),
-    /DeepSeek 请求失败：Invalid API key/,
+    (error) => error.code === 'AI_AUTH' && !error.message.includes('secret-key'),
   );
+});
+
+test('aborts a request that exceeds the timeout', async () => {
+  let signal;
+  await assert.rejects(
+    requestTabGroups({
+      apiKey: 'secret-key',
+      tabs: [],
+      timeoutMs: 5,
+      fetchImpl: async (_url, options) => {
+        signal = options.signal;
+        return new Promise(() => {});
+      },
+    }),
+    (error) => error.code === 'AI_TIMEOUT',
+  );
+  assert.equal(signal.aborted, true);
+});
+
+test('also times out while reading a stalled response body', async () => {
+  await assert.rejects(
+    requestTabGroups({
+      apiKey: 'secret-key',
+      tabs: [],
+      timeoutMs: 5,
+      fetchImpl: async () => ({
+        ok: true,
+        json: async () => new Promise(() => {}),
+      }),
+    }),
+    (error) => error.code === 'AI_TIMEOUT',
+  );
+});
+
+test('rejects invalid success responses as invalid AI output', async () => {
+  for (const responseBody of ['not-json', JSON.stringify({ choices: [] })]) {
+    await assert.rejects(
+      requestTabGroups({
+        apiKey: 'secret-key',
+        tabs: [],
+        fetchImpl: async () => new Response(responseBody, { status: 200 }),
+      }),
+      (error) => error.code === 'AI_INVALID_RESPONSE',
+    );
+  }
 });

@@ -1,3 +1,5 @@
+import { OrganizerError } from './errors.js';
+
 const TRACKING_PARAMETER = /^(utm_[^=]*|gclid|dclid|fbclid|msclkid|mc_[^=]*)$/i;
 
 function parseHttpUrl(rawUrl) {
@@ -75,20 +77,36 @@ export function buildOrganizePlan(tabs) {
 }
 
 export function validateModelGroups(payload, knownTabIds) {
-  if (!payload || !Array.isArray(payload.groups)) return [];
+  const invalid = () => {
+    throw new OrganizerError('AI_INVALID_RESPONSE', 'DeepSeek 返回的分组结果无效，本次未修改标签页。');
+  };
+
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !Array.isArray(payload.groups)) {
+    return invalid();
+  }
 
   const claimedTabIds = new Set();
   const validGroups = [];
   for (const candidate of payload.groups) {
-    if (!candidate || !Array.isArray(candidate.tabIds)) continue;
-    const tabIds = candidate.tabIds.filter((tabId) =>
-      Number.isInteger(tabId) && knownTabIds.has(tabId) && !claimedTabIds.has(tabId),
-    );
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate) ||
+      typeof candidate.title !== 'string' || !Array.isArray(candidate.tabIds)) {
+      return invalid();
+    }
+
+    const title = candidate.title.replace(/\s+/g, ' ').trim();
+    if (!title) return invalid();
+
+    for (const tabId of candidate.tabIds) {
+      if (!Number.isInteger(tabId) || !knownTabIds.has(tabId) || claimedTabIds.has(tabId)) {
+        return invalid();
+      }
+      claimedTabIds.add(tabId);
+    }
+
+    const tabIds = [...candidate.tabIds];
     if (tabIds.length < 2) continue;
 
-    tabIds.forEach((tabId) => claimedTabIds.add(tabId));
-    const title = String(candidate.title || '').replace(/\s+/g, ' ').trim().slice(0, 12);
-    validGroups.push({ title: title || '未命名分组', tabIds });
+    validGroups.push({ title: title.slice(0, 12), tabIds });
   }
   return validGroups;
 }

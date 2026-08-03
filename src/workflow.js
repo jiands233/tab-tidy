@@ -1,4 +1,5 @@
-import { buildOrganizePlan, normalizeUrl, validateModelGroups } from './core.js';
+import { buildOrganizePlan, validateModelGroups } from './core.js';
+import { OrganizerError } from './errors.js';
 
 export function assertTargetsUnchanged(originalTabs, liveTabs, targetIds) {
   const originalById = new Map(originalTabs.map((tab) => [tab.id, tab]));
@@ -6,8 +7,10 @@ export function assertTargetsUnchanged(originalTabs, liveTabs, targetIds) {
   for (const tabId of targetIds) {
     const original = originalById.get(tabId);
     const live = liveById.get(tabId);
-    if (!original || !live || live.pinned || live.groupId !== -1 || normalizeUrl(original.url) !== normalizeUrl(live.url)) {
-      throw new Error('整理期间标签页已被关闭、固定、分组或跳转，本次未修改标签页。');
+    if (!original || !live || live.pinned || live.groupId !== -1 || live.active !== original.active ||
+      live.windowId !== original.windowId || live.index !== original.index ||
+      live.url !== original.url) {
+      throw new OrganizerError('TAB_STATE_CHANGED', '整理期间标签页已发生变化，本次未修改标签页。');
     }
   }
 }

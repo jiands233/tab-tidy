@@ -37,8 +37,47 @@ test('does not call the browser executor when a candidate becomes pinned before 
       requestGroups: async () => ({ groups: [{ title: 'Work', tabIds: [1, 2] }] }),
       apply: async () => { applied = true; },
     }),
-    /整理期间标签页已被关闭、固定、分组或跳转/,
+    (error) => error.code === 'TAB_STATE_CHANGED',
   );
 
+  assert.equal(applied, false);
+});
+
+test('does not apply when a target moves, becomes active, or changes its exact URL', async () => {
+  const changedTabsList = [
+    [{ ...tabs[0], index: 1 }, { ...tabs[1], index: 0 }],
+    [{ ...tabs[0], active: false }, { ...tabs[1], active: true }],
+    [{ ...tabs[0], url: 'https://example.com/a#changed' }, tabs[1]],
+    [{ ...tabs[0], windowId: 6 }, tabs[1]],
+  ];
+
+  for (const changedTabs of changedTabsList) {
+    let applied = false;
+    await assert.rejects(
+      runOrganizeWorkflow({
+        apiKey: 'key',
+        initialTabs: tabs,
+        getLiveTabs: async () => changedTabs,
+        requestGroups: async () => ({ groups: [{ title: 'Work', tabIds: [1, 2] }] }),
+        apply: async () => { applied = true; },
+      }),
+      (error) => error.code === 'TAB_STATE_CHANGED',
+    );
+    assert.equal(applied, false);
+  }
+});
+
+test('does not apply when model output contains an unknown tab ID', async () => {
+  let applied = false;
+  await assert.rejects(
+    runOrganizeWorkflow({
+      apiKey: 'key',
+      initialTabs: tabs,
+      getLiveTabs: async () => tabs,
+      requestGroups: async () => ({ groups: [{ title: 'Work', tabIds: [1, 99] }] }),
+      apply: async () => { applied = true; },
+    }),
+    (error) => error.code === 'AI_INVALID_RESPONSE',
+  );
   assert.equal(applied, false);
 });

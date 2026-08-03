@@ -7,7 +7,11 @@ const keyForm = document.querySelector('#keyForm');
 
 async function request(message) {
   const response = await chrome.runtime.sendMessage(message);
-  if (!response?.ok) throw new Error(response?.error || '操作失败，请重试。');
+  if (!response?.ok) {
+    const error = new Error(response?.error || '操作失败，请重试。');
+    error.code = response?.code;
+    throw error;
+  }
   return response.data;
 }
 
@@ -15,7 +19,7 @@ function setFeedback(message = '') {
   feedback.textContent = message;
 }
 
-function renderResult(lastResult, undoAvailable) {
+function renderResult(lastResult, undoAvailable, isOrganizing) {
   if (!lastResult) {
     result.hidden = true;
     result.replaceChildren();
@@ -34,6 +38,7 @@ function renderResult(lastResult, undoAvailable) {
     undo.className = 'secondary';
     undo.type = 'button';
     undo.textContent = '撤销本次整理';
+    undo.disabled = isOrganizing;
     undo.addEventListener('click', undoLastOperation);
     result.append(undo);
   }
@@ -43,7 +48,10 @@ async function render() {
   const status = await request({ type: 'getStatus' });
   setup.hidden = status.hasApiKey;
   ready.hidden = !status.hasApiKey;
-  renderResult(status.lastResult, status.undoAvailable);
+  organizeButton.disabled = status.isOrganizing;
+  organizeButton.querySelector('span').textContent = status.isOrganizing ? '正在整理…' : '开始整理';
+  organizeButton.querySelector('b').hidden = status.isOrganizing;
+  renderResult(status.lastResult, status.undoAvailable, status.isOrganizing);
 }
 
 async function organize() {
@@ -58,23 +66,30 @@ async function organize() {
       setFeedback(operation.message);
     } else {
       await render();
+      if (operation.undoUnavailable) setFeedback(operation.message);
     }
   } catch (error) {
-    setFeedback(error.message);
+    setFeedback(error.code === 'BUSY' ? '正在整理，请稍候。' : error.message);
   } finally {
-    organizeButton.disabled = false;
-    organizeButton.querySelector('span').textContent = '开始整理';
-    organizeButton.querySelector('b').hidden = false;
+    await render().catch(() => {
+      organizeButton.disabled = false;
+      organizeButton.querySelector('span').textContent = '开始整理';
+      organizeButton.querySelector('b').hidden = false;
+    });
   }
 }
 
 async function undoLastOperation() {
   setFeedback();
+  const undoButton = result.querySelector('.secondary');
+  if (undoButton) undoButton.disabled = true;
   try {
-    await request({ type: 'undo' });
+    const operation = await request({ type: 'undo' });
     await render();
+    setFeedback(`已恢复 ${operation.restoredTabs} 个 · 重开 ${operation.reopenedTabs} 个 · 跳过 ${operation.skippedTabs} 个`);
   } catch (error) {
-    setFeedback(error.message);
+    setFeedback(error.code === 'BUSY' ? '正在整理，请稍候。' : error.message);
+    if (undoButton) undoButton.disabled = false;
   }
 }
 
@@ -96,4 +111,7 @@ keyForm.addEventListener('submit', async (event) => {
 
 organizeButton.addEventListener('click', organize);
 document.querySelector('#openSettings').addEventListener('click', () => chrome.runtime.openOptionsPage());
+chrome.storage.onChanged.addListener((_changes, areaName) => {
+  if (areaName === 'local' || areaName === 'session') render().catch(() => {});
+});
 render().catch((error) => setFeedback(error.message));

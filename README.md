@@ -17,7 +17,9 @@
 - 使用 DeepSeek 自动生成 Chrome 原生标签页分组
 - 规范化 URL 后清理重复页面，优先保留当前激活标签
 - 不改动固定标签或已经手工分组的标签
-- 支持撤销最近一次整理操作
+- DeepSeek 超时、异常输出或标签状态变化时保持浏览器原状
+- 防止重复点击并发执行同一次整理
+- 支持在 30 分钟内安全撤销；不会覆盖整理后手动修改的标签
 - 采用 Manifest V3，无自建服务器
 
 ### 隐私
@@ -32,6 +34,8 @@
 2. 打开 `chrome://extensions`，开启右上角的“开发者模式”。
 3. 点击“加载已解压的扩展程序”，选择本仓库根目录。
 4. 点击工具栏中的 Tab Tidy 图标，首次输入 DeepSeek API Key。
+
+需要 Chrome 102 或更高版本。
 
 ### 打包
 
@@ -58,7 +62,9 @@ npm test
 - Uses DeepSeek to propose semantic native Chrome tab groups
 - Removes duplicate pages after URL normalization, keeping the active tab first
 - Never changes pinned tabs or existing manual tab groups
-- Offers a one-time undo for the latest organization run
+- Keeps the browser unchanged on DeepSeek timeouts, invalid output, or tab-state changes
+- Prevents concurrent organization runs caused by repeated clicks
+- Offers a safe 30-minute undo without overwriting tabs changed afterwards
 - Manifest V3 extension with no application backend
 
 ### Privacy
@@ -73,6 +79,8 @@ npm test
 2. Open `chrome://extensions` and enable **Developer mode**.
 3. Select **Load unpacked** and choose this repository's root folder.
 4. Open the Tab Tidy toolbar icon and enter your DeepSeek API key once.
+
+Chrome 102 or later is required.
 
 ### Package
 
@@ -99,7 +107,9 @@ npm test
 - Erstellt mit DeepSeek thematische, native Chrome-Tabgruppen
 - Entfernt doppelte Seiten nach URL-Normalisierung und behält bevorzugt den aktiven Tab
 - Verändert weder angeheftete Tabs noch bereits manuell erstellte Gruppen
-- Kann den letzten Sortiervorgang einmal rückgängig machen
+- Lässt den Browser bei DeepSeek-Timeouts, ungültigen Antworten oder geänderten Tabs unverändert
+- Verhindert parallele Sortiervorgänge durch wiederholte Klicks
+- Bietet 30 Minuten lang ein sicheres Rückgängigmachen, ohne spätere manuelle Änderungen zu überschreiben
 - Manifest-V3-Erweiterung ohne eigenen Server
 
 ### Datenschutz
@@ -114,6 +124,8 @@ npm test
 2. `chrome://extensions` öffnen und den **Entwicklermodus** aktivieren.
 3. **Entpackte Erweiterung laden** wählen und den Stammordner dieses Repositorys auswählen.
 4. Das Tab-Tidy-Symbol in der Toolbar öffnen und den DeepSeek API-Key einmal eingeben.
+
+Chrome 102 oder neuer ist erforderlich.
 
 ### Paket erstellen
 
