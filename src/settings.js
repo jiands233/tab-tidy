@@ -6,6 +6,12 @@ export const DEFAULT_GROUPING_PALETTE = 'minimal';
 export const GROUPING_PALETTES = [
   { value: 'minimal', label: '克制双色 · 灰 + 蓝', colors: ['grey', 'blue'] },
   { value: 'cool', label: '冷色系 · 蓝 + 青 + 紫', colors: ['blue', 'cyan', 'purple'] },
+  { value: 'graphite', label: '石墨 · 灰 + 紫', colors: ['grey', 'purple'] },
+  { value: 'forest', label: '森林 · 灰 + 绿', colors: ['grey', 'green'] },
+  { value: 'ocean', label: '海洋 · 蓝 + 青', colors: ['blue', 'cyan'] },
+  { value: 'sunset', label: '日落 · 橙 + 黄', colors: ['orange', 'yellow'] },
+  { value: 'berry', label: '莓果 · 紫 + 粉', colors: ['purple', 'pink'] },
+  { value: 'warmGrey', label: '暖灰 · 灰 + 橙', colors: ['grey', 'orange'] },
   { value: 'single', label: '统一单色', colors: [] },
   { value: 'theme', label: '按主题配色', colors: [] },
 ];

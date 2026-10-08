@@ -19,7 +19,7 @@
 - 支持自动跟随内容、简体中文、繁體中文、English、日本語、한국어、Deutsch、Français、Español 的分组命名
 - 支持平衡和细致两种分组策略，优先使用“主题 · 子主题”突出具体任务
 - 支持简短主题、主题层级、emoji 主题三种命名形式，新用户默认 emoji 前缀
-- 配色支持克制双色、冷色系、统一单色和按主题配色，新用户默认灰蓝双色
+- 配色支持克制双色、冷色系、石墨、森林、海洋、日落、莓果、暖灰、统一单色和按主题配色，新用户默认灰蓝双色
 - 规范化 URL 后清理重复页面，优先保留当前激活标签
 - 固定标签始终保留；默认保留已有组，也可开启“重整已有标签组”重新分类和改名
 - DeepSeek 超时、异常输出或标签状态变化时保持浏览器原状
@@ -40,7 +40,7 @@
 - **细致模式**：先识别大主题，再拆分为具体任务，例如 `AI · 安全研究`、`开发 · Shell`；不会为了凑数创建只有一个标签的分组。
 - **平衡模式**：只保留边界清晰、共同目标明确的主题，减少过度拆分。
 - **命名形式**：简短主题如 `Shell 入门`；主题层级如 `开发 · Shell 入门`；图标主题如 `💻 开发 · Shell 入门`。Chrome 原生分组是平铺的，层级仅体现在组名中。
-- **颜色偏好**：默认使用灰蓝两色，可选蓝青紫冷色系、统一单色（Chrome 的 9 种预设色之一）或按主题配色。按主题时 AI 为紫色、开发为蓝色、学习为绿色等；emoji 始终按内容主题选择。
+- **颜色偏好**：默认使用灰蓝两色，可选蓝青紫冷色系、石墨（灰紫）、森林（灰绿）、海洋（蓝青）、日落（橙黄）、莓果（紫粉）、暖灰（灰橙）、统一单色（Chrome 的 9 种预设色之一）或按主题配色。按主题时 AI 为紫色、开发为蓝色、学习为绿色等；emoji 始终按内容主题选择。
 
 命名要求使用自然的短名词片语，保留 PyTorch、ChatGPT、Shell 等产品或技术名，不使用“其他”“资料”等笼统标签。例如，同一组 AI 安全研究页面可命名为：
 
@@ -106,7 +106,7 @@ npm test
 - Supports automatic, Simplified/Traditional Chinese, English, Japanese, Korean, German, French, and Spanish group naming
 - Supports balanced and detailed grouping, preferring `Theme · Subtopic` names
 - Offers concise, hierarchical, and emoji naming styles; new users default to emoji prefixes and a restrained grey/blue palette
-- Supports restrained, cool, single-color, and theme-based palettes with an appearance preview
+- Supports restrained, cool, graphite, forest, ocean, sunset, berry, warm grey, single-color, and theme-based palettes with an appearance preview
 - Removes duplicate pages after URL normalization, keeping the active tab first
 - Keeps pinned tabs unchanged and preserves existing groups by default; opt into regrouping to reclassify and rename existing groups
 - Keeps the browser unchanged on DeepSeek timeouts, invalid output, or tab-state changes

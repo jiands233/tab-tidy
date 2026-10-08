@@ -20,8 +20,6 @@ for (const [select, choices] of [[groupingLanguage, GROUPING_LANGUAGES], [groupi
 }
 
 function renderExample() {
-  const example = GROUPING_STYLES.find(({ value }) => value === groupingStyle.value)?.example;
-  document.querySelector('#namingExample').textContent = `形式示例（中文）：${example || ''}`;
   document.querySelector('#singleColorRow').hidden = groupingPalette.value !== 'single';
   const preview = document.querySelector('#groupPreview');
   preview.replaceChildren();

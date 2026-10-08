@@ -12,7 +12,6 @@
         <img class="brand-mark" src="assets/icon-48.png" alt="">
       </header>
       <h1>整理偏好</h1>
-      <p class="intro">仅保存在这台设备中</p>
       <section class="card">
         <div class="key-status">
           <span>API Key</span>
@@ -30,7 +29,6 @@
       <section class="card">
         <div class="section-heading">
           <h2>分组规则</h2>
-          <p>让主题更突出，也可以按你的阅读语言命名。</p>
         </div>
         <label for="groupingLanguage">命名语言</label>
         <select id="groupingLanguage"></select>
@@ -38,7 +36,6 @@
         <select id="groupingDetail"></select>
         <label for="groupingStyle">命名形式</label>
         <select id="groupingStyle"></select>
-        <p class="help" id="namingExample" aria-live="polite"></p>
         <label class="palette-label" for="groupingPalette">标签组配色</label>
         <select id="groupingPalette"></select>
         <div id="singleColorRow" hidden>
@@ -46,10 +43,8 @@
           <select id="groupingColor"></select>
         </div>
         <div class="group-preview" id="groupPreview" aria-label="分组外观示例"></div>
-        <p class="help">配色示意以实际浏览器显示为准。新用户默认灰蓝双色和 emoji 前缀。</p>
         <button class="save full-width" id="savePreferences" type="button" disabled>保存分组规则</button>
         <button class="apply-appearance full-width" id="restyleGroups" type="button" disabled>保存并更新上次分组的外观</button>
-        <p class="help">外观更新仅调整上次整理生成的组（30 分钟内），手动改过的组会跳过。需要重新分类或整体改名时，在弹窗开启“重整已有标签组”。</p>
       </section>
       <p id="feedback" role="status" aria-live="polite"></p>
     </main>

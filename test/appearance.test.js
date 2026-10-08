@@ -2,6 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { groupColor, restyleOwnedGroups } from '../src/appearance.js';
 import { formatGroupTitle } from '../src/core.js';
+import { GROUPING_COLORS, GROUPING_PALETTES, normalizeGroupingSettings } from '../src/settings.js';
+
+test('accepts every preset and cycles only valid native colors without changing defaults', () => {
+  const validColors = new Set(GROUPING_COLORS.map(({ value }) => value));
+  assert.equal(new Set(GROUPING_PALETTES.map(({ value }) => value)).size, GROUPING_PALETTES.length);
+  for (const { value, colors } of GROUPING_PALETTES) {
+    assert.equal(normalizeGroupingSettings({ groupingPalette: value }).groupingPalette, value);
+    if (['single', 'theme'].includes(value)) continue;
+    assert.ok(colors.length >= 2);
+    assert.ok(colors.every(color => validColors.has(color)));
+    assert.deepEqual(Array.from({ length: colors.length * 2 }, (_, index) => groupColor('ai', index, { groupingPalette: value })), [...colors, ...colors]);
+  }
+  assert.equal(normalizeGroupingSettings({ groupingPalette: 'invalid' }).groupingPalette, 'minimal');
+});
+
+test('provides six distinct new two-color presets', () => {
+  const expected = { graphite: ['grey', 'purple'], forest: ['grey', 'green'], ocean: ['blue', 'cyan'],
+    sunset: ['orange', 'yellow'], berry: ['purple', 'pink'], warmGrey: ['grey', 'orange'] };
+  for (const [groupingPalette, colors] of Object.entries(expected)) {
+    assert.deepEqual([0, 1, 2].map(index => groupColor('ai', index, { groupingPalette })), [...colors, colors[0]]);
+  }
+});
 
 test('limits the default palette to two colors and supports one chosen native color', () => {
   assert.deepEqual(Array.from({ length: 6 }, (_, i) => groupColor('ai', i)), ['grey', 'blue', 'grey', 'blue', 'grey', 'blue']);
