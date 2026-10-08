@@ -4,6 +4,7 @@ const feedback = document.querySelector('#feedback');
 const result = document.querySelector('#result');
 const organizeButton = document.querySelector('#organize');
 const keyForm = document.querySelector('#keyForm');
+const includeGrouped = document.querySelector('#includeGrouped');
 
 async function request(message) {
   const response = await chrome.runtime.sendMessage(message);
@@ -29,10 +30,7 @@ function renderResult(lastResult, undoAvailable, isOrganizing) {
   result.replaceChildren();
   const title = document.createElement('strong');
   title.textContent = lastResult.message || '最近一次整理';
-  const stats = document.createElement('div');
-  stats.className = 'stats';
-  stats.textContent = `新建 ${lastResult.groupCount ?? 0} 组 · 归组 ${lastResult.groupedTabCount ?? 0} 个 · 去重 ${lastResult.duplicateCount ?? 0} 个`;
-  result.append(title, stats);
+  result.append(title);
   if (undoAvailable) {
     const undo = document.createElement('button');
     undo.className = 'secondary';
@@ -50,6 +48,7 @@ async function render() {
   setup.hidden = status.hasApiKey;
   ready.hidden = !status.hasApiKey;
   organizeButton.disabled = status.isOrganizing || !runtimeReady;
+  includeGrouped.disabled = status.isOrganizing || !runtimeReady;
   organizeButton.querySelector('span').textContent = status.isOrganizing ? '正在整理…' : '开始整理';
   organizeButton.querySelector('b').hidden = status.isOrganizing || !runtimeReady;
   renderResult(status.lastResult, status.undoAvailable, status.isOrganizing || !runtimeReady);
@@ -62,7 +61,7 @@ async function organize() {
   organizeButton.querySelector('span').textContent = '正在整理…';
   organizeButton.querySelector('b').hidden = true;
   try {
-    const operation = await request({ type: 'organize' });
+    const operation = await request({ type: 'organize', includeGrouped: includeGrouped.checked });
     if (operation.groupCount === 0 && operation.duplicateCount === 0) {
       result.hidden = true;
       setFeedback(operation.message);

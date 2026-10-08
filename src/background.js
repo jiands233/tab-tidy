@@ -9,16 +9,25 @@ import {
   stampUndoSnapshot,
 } from './state.js';
 import { runOrganizeWorkflow } from './workflow.js';
+import { normalizeGroupingSettings } from './settings.js';
+import { canRestyleSnapshot, restyleOwnedGroups } from './appearance.js';
 
 const STORAGE_KEYS = {
   apiKey: 'deepseekApiKey',
   snapshot: 'lastOrganizeSnapshot',
   result: 'lastOrganizeResult',
+  groupingLanguage: 'groupingLanguage',
+  groupingDetail: 'groupingDetail',
+  groupingStyle: 'groupingStyle',
+  groupingPalette: 'groupingPalette',
+  groupingColor: 'groupingColor',
 };
 
 function chromeApi() {
   return {
-    groupTabs: (tabIds) => chrome.tabs.group({ tabIds }),
+    groupTabs: (tabIds, groupId) => chrome.tabs.group({ tabIds, ...(Number.isInteger(groupId) ? { groupId } : {}) }),
+    getGroup: (groupId) => chrome.tabGroups.get(groupId),
+    getGroupTabs: (groupId) => chrome.tabs.query({ groupId }),
     updateGroup: (groupId, details) => chrome.tabGroups.update(groupId, details),
     closeTabs: (tabIds) => chrome.tabs.remove(tabIds),
     ungroupTabs: (tabIds) => chrome.tabs.ungroup(tabIds),
@@ -45,18 +54,56 @@ async function currentWindowTabs() {
   return tabs;
 }
 
-async function organizeCurrentWindow() {
+async function organizeCurrentWindow({ includeGrouped = false } = {}) {
   const lockToken = await acquireOrganizeLock(chrome.storage.session);
+  const startedAt = Date.now();
   try {
     const { [STORAGE_KEYS.apiKey]: apiKey } = await chrome.storage.local.get(STORAGE_KEYS.apiKey);
+    const settings = normalizeGroupingSettings(await chrome.storage.local.get([
+      STORAGE_KEYS.groupingLanguage,
+      STORAGE_KEYS.groupingDetail,
+      STORAGE_KEYS.groupingStyle,
+      STORAGE_KEYS.groupingPalette,
+      STORAGE_KEYS.groupingColor,
+    ]));
     const initialTabs = await currentWindowTabs();
     const windowId = initialTabs[0].windowId;
+    const originalGroupIds = new Set(includeGrouped ? initialTabs.filter(tab =>
+      !tab.pinned && tab.groupId !== -1 && /^https?:/.test(tab.url || ''),
+    ).map(tab => tab.groupId) : []);
+    const originalGroups = originalGroupIds.size ? (await chrome.tabGroups.query({ windowId }))
+      .filter(group => originalGroupIds.has(group.id))
+      .map(group => ({ groupId: group.id, title: group.title || '', color: group.color, collapsed: group.collapsed,
+        tabIds: initialTabs.filter(tab => tab.groupId === group.id).map(tab => tab.id),
+        originalTabs: initialTabs.filter(tab => tab.groupId === group.id).map(tab => ({ id: tab.id, url: tab.url, windowId: tab.windowId })) })) : [];
     const applied = await runOrganizeWorkflow({
       apiKey,
       initialTabs,
-      getLiveTabs: () => chrome.tabs.query({ windowId }),
-      requestGroups: requestTabGroups,
-      apply: ({ plan, groups, tabs }) => applyOrganizePlan(chromeApi(), plan, groups, tabs),
+      getLiveTabs: async () => {
+        const liveTabs = await chrome.tabs.query({ windowId });
+        if (originalGroups.length) {
+          const liveGroups = await chrome.tabGroups.query({ windowId });
+          if (originalGroups.some(original => {
+            const live = liveGroups.find(group => group.id === original.groupId);
+            const members = liveTabs.filter(tab => tab.groupId === original.groupId).map(tab => tab.id);
+            return !live || (live.title || '') !== original.title || live.color !== original.color ||
+              live.collapsed !== original.collapsed || members.length !== original.tabIds.length ||
+              members.some(id => !original.tabIds.includes(id));
+          })) throw new OrganizerError('TAB_STATE_CHANGED', '整理期间已有标签组发生变化，本次未修改标签页。');
+        }
+        return liveTabs;
+      },
+      requestGroups: ({ apiKey: requestApiKey, tabs }) => requestTabGroups({
+        apiKey: requestApiKey,
+        tabs,
+        language: settings.groupingLanguage,
+        detail: settings.groupingDetail,
+        style: settings.groupingStyle,
+        browserLanguage: chrome.i18n.getUILanguage(),
+      }),
+      style: settings.groupingStyle,
+      includeGrouped,
+      apply: ({ plan, groups, tabs }) => applyOrganizePlan(chromeApi(), plan, groups, tabs, settings, { includeGrouped, originalGroups }),
     });
     if (!applied.snapshot) return applied;
 
@@ -66,6 +113,7 @@ async function organizeCurrentWindow() {
       groupedTabCount: applied.groupedTabCount,
       duplicateCount: applied.duplicateCount,
       completedAt,
+      elapsedMs: completedAt - startedAt,
       message: applied.groupCount === 0 && applied.duplicateCount === 0
         ? '没有发现可自动归组的标签。'
         : '整理完成。',
@@ -83,6 +131,23 @@ async function organizeCurrentWindow() {
       result.undoUnavailable = true;
     }
     return result;
+  } finally {
+    await releaseOrganizeLock(chrome.storage.session, lockToken).catch(() => {});
+  }
+}
+
+async function restyleLastGroups() {
+  const lockToken = await acquireOrganizeLock(chrome.storage.session);
+  try {
+    const values = await chrome.storage.local.get([STORAGE_KEYS.snapshot, STORAGE_KEYS.groupingLanguage,
+      STORAGE_KEYS.groupingDetail, STORAGE_KEYS.groupingStyle, STORAGE_KEYS.groupingPalette, STORAGE_KEYS.groupingColor]);
+    const snapshot = values[STORAGE_KEYS.snapshot];
+    if (!isUndoSnapshotActive(snapshot) || !canRestyleSnapshot(snapshot)) {
+      throw new Error('没有可更新外观的分组，请先整理一次。');
+    }
+    const outcome = await restyleOwnedGroups(chromeApi(), snapshot, values);
+    await chrome.storage.local.set({ [STORAGE_KEYS.snapshot]: outcome.snapshot });
+    return { updatedGroups: outcome.updatedGroups, skippedGroups: outcome.skippedGroups };
   } finally {
     await releaseOrganizeLock(chrome.storage.session, lockToken).catch(() => {});
   }
@@ -114,6 +179,11 @@ async function getStatus() {
     STORAGE_KEYS.apiKey,
     STORAGE_KEYS.snapshot,
     STORAGE_KEYS.result,
+    STORAGE_KEYS.groupingLanguage,
+    STORAGE_KEYS.groupingDetail,
+    STORAGE_KEYS.groupingStyle,
+    STORAGE_KEYS.groupingPalette,
+    STORAGE_KEYS.groupingColor,
   ]);
   let snapshot = values[STORAGE_KEYS.snapshot];
   if (snapshot && !isUndoSnapshotActive(snapshot)) {
@@ -125,9 +195,11 @@ async function getStatus() {
     hasApiKey: Boolean(values[STORAGE_KEYS.apiKey]),
     maskedApiKey: values[STORAGE_KEYS.apiKey] ? maskKey(values[STORAGE_KEYS.apiKey]) : null,
     undoAvailable: Boolean(snapshot),
+    canRestyle: isUndoSnapshotActive(snapshot) && canRestyleSnapshot(snapshot),
     undoExpiresAt: snapshot?.expiresAt || null,
     isOrganizing: await isOrganizeLocked(chrome.storage.session),
     lastResult: values[STORAGE_KEYS.result] || null,
+    ...normalizeGroupingSettings(values),
   };
 }
 
@@ -144,8 +216,27 @@ async function handleMessage(message) {
     case 'clearApiKey':
       await chrome.storage.local.remove(STORAGE_KEYS.apiKey);
       return getStatus();
+    case 'savePreferences': {
+      const settings = normalizeGroupingSettings({
+        groupingLanguage: message.groupingLanguage,
+        groupingDetail: message.groupingDetail,
+        groupingStyle: message.groupingStyle,
+        groupingPalette: message.groupingPalette,
+        groupingColor: message.groupingColor,
+      });
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.groupingLanguage]: settings.groupingLanguage,
+        [STORAGE_KEYS.groupingDetail]: settings.groupingDetail,
+        [STORAGE_KEYS.groupingStyle]: settings.groupingStyle,
+        [STORAGE_KEYS.groupingPalette]: settings.groupingPalette,
+        [STORAGE_KEYS.groupingColor]: settings.groupingColor,
+      });
+      return getStatus();
+    }
     case 'organize':
-      return organizeCurrentWindow();
+      return organizeCurrentWindow({ includeGrouped: message.includeGrouped === true });
+    case 'restyleLastGroups':
+      return restyleLastGroups();
     case 'undo':
       return undoLastOrganize();
     default:

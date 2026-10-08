@@ -10,19 +10,28 @@ main { margin: 0 auto; max-width: 520px; padding: 64px 24px; }
 header { align-items: center; display: flex; margin-bottom: 22px; }
 .brand-mark { display: block; height: 30px; width: 30px; }
 h1 { font-family: "PingFang SC", "SF Pro Display", "Helvetica Neue", Arial, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -.055em; line-height: 1.15; margin: 0; }
-.intro { color: #77736f; font-size: 13px; line-height: 1.5; margin: 9px 0 0; }
 .card { background: #fff; border: 1px solid #e5e2dd; border-radius: 18px; box-shadow: 0 12px 30px #3830250a; margin-top: 28px; padding: 20px; }
+.section-heading { border-bottom: 1px solid #efedea; margin-bottom: 20px; padding-bottom: 13px; }
+.section-heading h2 { font-size: 16px; letter-spacing: -.025em; margin: 0; }
 .key-status { align-items: center; border-bottom: 1px solid #efedea; display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; }
 .key-status > span { color: #77736f; font-size: 12px; font-weight: 600; }
 .saved-key { color: #33302d; font-size: 12px; font-weight: 600; margin: 0; }
 label { color: #4d4945; display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
-input { background: #fff; border: 1px solid #dfddd9; border-radius: 12px; font: inherit; outline: 0; padding: 12px; transition: border-color 160ms ease, box-shadow 160ms ease; width: 100%; }
-input:focus { border-color: #aa3040; box-shadow: 0 0 0 3px #aa30401a; }
+input, select { background: #fff; border: 1px solid #dfddd9; border-radius: 12px; font: inherit; outline: 0; padding: 12px; transition: border-color 160ms ease, box-shadow 160ms ease; width: 100%; }
+input:focus, select:focus { border-color: #aa3040; box-shadow: 0 0 0 3px #aa30401a; }
+.card select + label { margin-top: 16px; }
+.palette-label, #singleColorRow label { margin-top: 18px; }
+.group-preview { display: flex; flex-wrap: wrap; gap: 7px; margin: 16px 0 8px; }
+.preview-group { border-radius: 8px; font-size: 11px; font-weight: 600; line-height: 1.6; padding: 6px 9px; }
+.apply-appearance { background: #fff; border: 1px solid #dfdbd6; color: #55504b; }
+button:disabled { cursor: default; opacity: .5; }
 .actions { display: flex; gap: 10px; margin-top: 13px; }
 button { border-radius: 11px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 650; min-height: 40px; padding: 0 15px; transition: background-color 160ms ease, border-color 160ms ease, transform 100ms ease-out; }
 button:active { transform: scale(.98); }
 .save { background: #efedea; border: 1px solid #dfdbd6; color: #242424; flex: 1; }
 .save:hover { background: #e8e4df; border-color: #d4cdc5; }
+.full-width { margin-top: 16px; width: 100%; }
+.save:disabled { cursor: progress; opacity: .65; }
 .danger { background: #fff; border: 1px solid #eadcd9; color: #9a5960; }
 .danger:hover { background: #faf1f0; border-color: #dfc4c1; }
 #feedback { color: #aa3040; font-size: 12px; min-height: 20px; }
@@ -32,5 +41,5 @@ button:active { transform: scale(.98); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  input, button { transition: none; }
+  input, select, button { transition: none; }
 }

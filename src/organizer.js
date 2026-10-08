@@ -1,4 +1,5 @@
-import { GROUP_COLORS, normalizeUrl } from './core.js';
+import { normalizeUrl } from './core.js';
+import { groupColor } from './appearance.js';
 
 function originalPositionsFor(tabIds, tabs) {
   const tabById = new Map(tabs.map((tab) => [tab.id, tab]));
@@ -8,7 +9,7 @@ function originalPositionsFor(tabIds, tabs) {
     .map((tab) => ({ id: tab.id, index: tab.index, url: tab.url }));
 }
 
-function closedTabsFor(tabIds, tabs) {
+function closedTabsFor(tabIds, tabs, includeGrouped = false) {
   const tabById = new Map(tabs.map((tab) => [tab.id, tab]));
   const countsByUrl = new Map();
   for (const tab of tabs) {
@@ -23,6 +24,7 @@ function closedTabsFor(tabIds, tabs) {
       index: tab.index,
       active: Boolean(tab.active),
       desiredCount: countsByUrl.get(normalizeUrl(tab.url)) || 1,
+      ...(includeGrouped ? { originalId: tab.id } : {}),
     }));
 }
 
@@ -34,19 +36,27 @@ function duplicateEntriesFor(tabIds, tabs) {
     .map((tab) => ({ id: tab.id, url: tab.url, index: tab.index, active: Boolean(tab.active) }));
 }
 
-export async function applyOrganizePlan(api, plan, groups, tabs) {
+export async function applyOrganizePlan(api, plan, groups, tabs, preferences = {}, { originalGroups = [], includeGrouped = false } = {}) {
   const groupedTabIds = [];
+  const survivorIds = (plan.aiTabs || []).map(tab => tab.tabId);
+  const targetIds = new Set([...survivorIds, ...plan.duplicateTabIds]);
+  const affectedTabIds = includeGrouped ? survivorIds : groupedTabIds;
   const createdGroups = [];
   const duplicateEntries = duplicateEntriesFor(plan.duplicateTabIds, tabs);
   const closedEntries = [];
   try {
+    if (includeGrouped) {
+      const previouslyGrouped = tabs.filter(tab => targetIds.has(tab.id) && tab.groupId !== -1).map(tab => tab.id);
+      if (previouslyGrouped.length) await api.ungroupTabs(previouslyGrouped);
+    }
     for (const [index, group] of groups.entries()) {
       const groupId = await api.groupTabs(group.tabIds);
       groupedTabIds.push(...group.tabIds);
-      createdGroups.push({ groupId, tabIds: [...group.tabIds] });
+      const color = groupColor(group.category, index, preferences);
+      createdGroups.push({ groupId, tabIds: [...group.tabIds], title: group.title, color, category: group.category || 'general' });
       await api.updateGroup(groupId, {
         title: group.title,
-        color: GROUP_COLORS[index % GROUP_COLORS.length],
+        color,
         collapsed: false,
       });
     }
@@ -62,17 +72,26 @@ export async function applyOrganizePlan(api, plan, groups, tabs) {
         // Preserve the original error; the caller can notify the user that Chrome could not fully roll back.
       }
     }
+    const restoredIds = new Map(tabs.map(tab => [tab.id, tab.id]));
     for (const closed of closedEntries.sort((left, right) => left.index - right.index)) {
       try {
-        await api.createTab({
+        const reopened = await api.createTab({
           url: closed.url,
           index: closed.index,
           active: closed.active,
           windowId: tabs.find((tab) => tab.windowId !== undefined)?.windowId,
         });
+        if (reopened?.id !== undefined) restoredIds.set(closed.id, reopened.id);
       } catch {
         // Preserve the original error; a reopened tab is best effort when Chrome itself failed mid-operation.
       }
+    }
+    if (includeGrouped) {
+      for (const tab of tabs) {
+        if (!targetIds.has(tab.id) || !restoredIds.has(tab.id) || tab.pinned) continue;
+        try { await api.moveTabs([restoredIds.get(tab.id)], { windowId: tab.windowId, index: tab.index }); } catch { /* Best effort. */ }
+      }
+      await restoreOriginalGroups(api, originalGroups, restoredIds).catch(() => {});
     }
     throw error;
   }
@@ -84,10 +103,11 @@ export async function applyOrganizePlan(api, plan, groups, tabs) {
     duplicateCount: plan.duplicateTabIds.length,
     snapshot: {
       windowId,
-      groupedTabIds,
+      groupedTabIds: [...affectedTabIds],
       createdGroups,
-      originalPositions: originalPositionsFor(groupedTabIds, tabs),
-      closedTabs: closedTabsFor(plan.duplicateTabIds, tabs),
+      originalPositions: originalPositionsFor(affectedTabIds, tabs),
+      closedTabs: closedTabsFor(plan.duplicateTabIds, tabs, includeGrouped),
+      ...(includeGrouped ? { originalGroups } : {}),
     },
   };
 }
@@ -99,7 +119,7 @@ export function finalizeUndoSnapshot(snapshot, organizedTabs) {
   );
   const organizedPositions = snapshot.groupedTabIds.map((tabId) => {
     const tab = tabById.get(tabId);
-    const expectedGroupId = expectedGroupById.get(tabId);
+    const expectedGroupId = expectedGroupById.get(tabId) ?? -1;
     if (!tab || tab.groupId !== expectedGroupId) {
       throw new Error('无法保存安全撤销状态。');
     }
@@ -140,8 +160,20 @@ export async function undoOrganize(api, snapshot, liveTabs) {
 
   const { safeIds, skippedTabs: changedGroupedTabs } = safeGroupedTabs(snapshot, liveTabs);
   const safeIdSet = new Set(safeIds);
-  if (safeIds.length > 0) {
-    await api.ungroupTabs(safeIds);
+  const restoredIds = new Map(liveTabs.filter(tab => !snapshot.groupedTabIds.includes(tab.id) || safeIdSet.has(tab.id)).map(tab => [tab.id, tab.id]));
+  // Non-web members were never reorganized. Do not pull them back out of a group the user moved them to.
+  for (const originalGroup of snapshot.originalGroups || []) {
+    for (const id of originalGroup.tabIds) {
+      if (snapshot.groupedTabIds.includes(id)) continue;
+      const live = liveTabs.find(tab => tab.id === id);
+      const original = originalGroup.originalTabs?.find(tab => tab.id === id);
+      if (!live || live.groupId !== originalGroup.groupId ||
+        (original && (live.url !== original.url || live.windowId !== original.windowId))) restoredIds.delete(id);
+    }
+  }
+  const currentlyGroupedIds = safeIds.filter(id => liveTabs.find(tab => tab.id === id)?.groupId !== -1);
+  if (currentlyGroupedIds.length > 0) {
+    await api.ungroupTabs(currentlyGroupedIds);
   }
   for (const position of snapshot.originalPositions.filter(({ id }) => safeIdSet.has(id))) {
     await api.moveTabs([position.id], { windowId: snapshot.windowId, index: position.index });
@@ -162,19 +194,43 @@ export async function undoOrganize(api, snapshot, liveTabs) {
       duplicateSkips += 1;
       continue;
     }
-    await api.createTab({
+    const reopened = await api.createTab({
       url: tab.url,
       index: tab.index,
       active: tab.active,
       windowId: snapshot.windowId,
     });
+    if (Number.isInteger(tab.originalId) && reopened?.id !== undefined) restoredIds.set(tab.originalId, reopened.id);
     openUrlCounts.set(normalized, openCount + 1);
     reopenedTabs += 1;
   }
 
+  const skippedOriginalTabs = await restoreOriginalGroups(api, snapshot.originalGroups || [], restoredIds);
+
   return {
     restoredTabs: safeIds.length,
     reopenedTabs,
-    skippedTabs: changedGroupedTabs + duplicateSkips,
+    skippedTabs: changedGroupedTabs + duplicateSkips + skippedOriginalTabs,
   };
+}
+
+async function restoreOriginalGroups(api, originalGroups, restoredIds) {
+  let skippedTabs = 0;
+  for (const original of originalGroups) {
+    const tabIds = original.tabIds.filter(id => restoredIds.has(id)).map(id => restoredIds.get(id));
+    if (!tabIds.length) continue;
+    let current;
+    try { current = await api.getGroup(original.groupId); } catch { /* Chrome removed an emptied group. */ }
+    if (current) {
+      const members = await api.getGroupTabs(original.groupId);
+      if ((current.title || '') !== original.title || current.color !== original.color ||
+        current.collapsed !== original.collapsed || members.some(tab => !tabIds.includes(tab.id))) {
+        skippedTabs += tabIds.length;
+        continue;
+      }
+    }
+    const groupId = await api.groupTabs(tabIds, current?.id);
+    await api.updateGroup(groupId, { title: original.title, color: original.color, collapsed: original.collapsed });
+  }
+  return skippedTabs;
 }

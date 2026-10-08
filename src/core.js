@@ -36,11 +36,11 @@ function toAiTab(tab) {
   };
 }
 
-function isEligible(tab) {
+function isEligible(tab, includeGrouped = false) {
   return tab &&
     Number.isInteger(tab.id) &&
     !tab.pinned &&
-    (tab.groupId === -1 || tab.groupId === undefined) &&
+    (includeGrouped || tab.groupId === -1 || tab.groupId === undefined) &&
     Boolean(parseHttpUrl(tab.url));
 }
 
@@ -49,10 +49,10 @@ function preferredTab(left, right) {
   return left.index <= right.index ? left : right;
 }
 
-export function buildOrganizePlan(tabs) {
-  const eligibleTabs = tabs.filter(isEligible);
+export function buildOrganizePlan(tabs, { includeGrouped = false } = {}) {
+  const eligibleTabs = tabs.filter(tab => isEligible(tab, includeGrouped));
   const untouchedTabIds = tabs
-    .filter((tab) => !isEligible(tab) && Number.isInteger(tab?.id))
+    .filter((tab) => !isEligible(tab, includeGrouped) && Number.isInteger(tab?.id))
     .map((tab) => tab.id);
   const survivorsByUrl = new Map();
 
@@ -76,7 +76,7 @@ export function buildOrganizePlan(tabs) {
   };
 }
 
-export function validateModelGroups(payload, knownTabIds) {
+export function validateModelGroups(payload, knownTabIds, { style = 'hierarchical' } = {}) {
   const invalid = () => {
     throw new OrganizerError('AI_INVALID_RESPONSE', 'DeepSeek 返回的分组结果无效，本次未修改标签页。');
   };
@@ -95,6 +95,9 @@ export function validateModelGroups(payload, knownTabIds) {
 
     const title = candidate.title.replace(/\s+/g, ' ').trim();
     if (!title) return invalid();
+    if (candidate.category !== undefined &&
+      (typeof candidate.category !== 'string' || !Object.hasOwn(GROUP_THEMES, candidate.category))) return invalid();
+    if (!formatGroupTitle(title, candidate.category, 'concise')) return invalid();
 
     for (const tabId of candidate.tabIds) {
       if (!Number.isInteger(tabId) || !knownTabIds.has(tabId) || claimedTabIds.has(tabId)) {
@@ -106,9 +109,33 @@ export function validateModelGroups(payload, knownTabIds) {
     const tabIds = [...candidate.tabIds];
     if (tabIds.length < 2) continue;
 
-    validGroups.push({ title: title.slice(0, 12), tabIds });
+    const group = { title: formatGroupTitle(title, candidate.category, style), tabIds };
+    if (candidate.category !== undefined) group.category = candidate.category;
+    validGroups.push(group);
   }
   return validGroups;
 }
 
+export function formatGroupTitle(title, category, style) {
+  const parts = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(String(title).trim())];
+  // Replace existing emoji prefixes rather than stacking them on each update.
+  while (parts.length && (/\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20e3/u.test(parts[0].segment) || /^\s+$/.test(parts[0].segment))) parts.shift();
+  const baseTitle = parts.map(({ segment }) => segment).join('').trim();
+  const icon = style === 'icon' ? `${(GROUP_THEMES[category] || GROUP_THEMES.general).icon} ` : '';
+  return [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(`${icon}${baseTitle}`)]
+    .slice(0, GROUP_TITLE_MAX_LENGTH).map(({ segment }) => segment).join('').trim();
+}
+
+export const GROUP_TITLE_MAX_LENGTH = 40;
 export const GROUP_COLORS = ['blue', 'green', 'purple', 'cyan', 'orange', 'pink'];
+export const GROUP_THEMES = {
+  ai: { color: 'purple', icon: '🤖' },
+  development: { color: 'blue', icon: '💻' },
+  learning: { color: 'green', icon: '📚' },
+  research: { color: 'cyan', icon: '🔬' },
+  work: { color: 'orange', icon: '💼' },
+  media: { color: 'red', icon: '🎬' },
+  social: { color: 'pink', icon: '💬' },
+  shopping: { color: 'yellow', icon: '🛍️' },
+  general: { color: 'grey', icon: '📁' },
+};

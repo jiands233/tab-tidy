@@ -6,17 +6,32 @@
 
 <p align="center">A local-first Chrome extension that turns a crowded browser window into native tab groups with DeepSeek.</p>
 
+Current repository version: **v1.3.2** · Chrome **102+** · Bring your own DeepSeek API key.
+
+The repository version and Chrome Web Store version are released separately. Updating this repository does not publish a store update.
+
 ---
 
 ## 中文
 
 **Tab Tidy（标签页整理）** 是一个本地优先的 Chrome 扩展。点击插件栏图标后，它会使用 DeepSeek 按主题整理当前窗口中尚未分组的网页标签，并清理重复页面。
 
+### v1.3.2 更新
+
+- **更简洁的界面**：弹窗和设置页删除辅助说明小字；保留必要标题、选项、操作按钮、配色预览和状态反馈。
+- **10 套配色方案**：新增石墨、森林、海洋、日落、莓果、暖灰；不覆盖用户已有偏好。
+- **保留已有功能**：多语言主题命名、emoji 前缀、可选重整已有标签组，以及 30 分钟安全撤销。
+
 ### 功能
 
 - 使用 DeepSeek 自动生成 Chrome 原生标签页分组
+- 使用快速非思考模式并限制结构化输出长度，减少等待时间
+- 支持自动跟随内容、简体中文、繁體中文、English、日本語、한국어、Deutsch、Français、Español 的分组命名
+- 支持平衡和细致两种分组策略，优先使用“主题 · 子主题”突出具体任务
+- 支持简短主题、主题层级、emoji 主题三种命名形式，新用户默认 emoji 前缀
+- 配色支持克制双色、冷色系、石墨、森林、海洋、日落、莓果、暖灰、统一单色和按主题配色，新用户默认灰蓝双色
 - 规范化 URL 后清理重复页面，优先保留当前激活标签
-- 不改动固定标签或已经手工分组的标签
+- 固定标签始终保留；默认保留已有组，也可开启“重整已有标签组”重新分类和改名
 - DeepSeek 超时、异常输出或标签状态变化时保持浏览器原状
 - 防止重复点击并发执行同一次整理
 - 支持在 30 分钟内安全撤销；不会覆盖整理后手动修改的标签
@@ -25,8 +40,60 @@
 ### 隐私
 
 - DeepSeek API Key 仅保存于当前设备的 `chrome.storage.local`
-- 发送给 DeepSeek 的只有候选标签的标题、域名与不含查询参数的路径
+- 发送给 DeepSeek 的标签信息只有候选标签的标题、域名与不含查询参数的路径；还会发送所选命名规则和浏览器语言
 - 不读取、不上传网页正文，也不使用自建中转服务
+
+### 分组命名规则
+
+- **自动跟随内容**：按每个分组中标题的主要语言命名，保留简体或繁体习惯；语言占比相同时使用浏览器语言。
+- **指定语言**：所有分组统一使用所选语言，产品名和技术名保留通用写法。
+- **细致模式**：先识别大主题，再拆分为具体任务，例如 `AI · 安全研究`、`开发 · Shell`；不会为了凑数创建只有一个标签的分组。
+- **平衡模式**：只保留边界清晰、共同目标明确的主题，减少过度拆分。
+- **命名形式**：简短主题如 `Shell 入门`；主题层级如 `开发 · Shell 入门`；图标主题如 `💻 开发 · Shell 入门`。Chrome 原生分组是平铺的，层级仅体现在组名中。
+- **颜色偏好**：配色独立于命名语言与主题，支持下方 10 套方案；emoji 始终按内容主题选择。
+
+命名要求使用自然的短名词片语，保留 PyTorch、ChatGPT、Shell 等产品或技术名，不使用“其他”“资料”等笼统标签。例如，同一组 AI 安全研究页面可命名为：
+
+| 语言 | 主题层级示例 | 规则 |
+| --- | --- | --- |
+| 简体中文 | AI · 安全研究 | 简洁的中文名词短语 |
+| 繁體中文 | AI · 安全研究 | 使用自然的繁體中文詞彙 |
+| English | AI · Safety Research | Concise Title Case noun phrases |
+| 日本語 | AI · 安全性研究 | 自然な短い名詞句 |
+| 한국어 | AI · 안전성 연구 | 자연스럽고 짧은 명사구 |
+| Deutsch | KI · Sicherheitsforschung | Kurze, natürliche Substantivgruppen |
+| Français | IA · Recherche en sécurité | Groupes nominaux courts et naturels |
+| Español | IA · Investigación de seguridad | Frases nominales breves y naturales |
+
+这些是规则示例，实际主题由标题和路径推断，不读取网页正文。关闭重整开关时，已有组的名称、颜色和成员保持不变。
+
+### 选择配色
+
+| 方案 | 颜色 | 特点 |
+| --- | --- | --- |
+| 克制双色 | 灰 + 蓝 | 新用户默认 |
+| 冷色系 | 蓝 + 青 + 紫 | 三色循环 |
+| 石墨 | 灰 + 紫 | 双色循环 |
+| 森林 | 灰 + 绿 | 双色循环 |
+| 海洋 | 蓝 + 青 | 双色循环 |
+| 日落 | 橙 + 黄 | 双色循环 |
+| 莓果 | 紫 + 粉 | 双色循环 |
+| 暖灰 | 灰 + 橙 | 双色循环 |
+| 统一单色 | 选择一种预设色 | 所有组使用同色 |
+| 按主题配色 | 根据内容主题选择 | AI 紫、开发蓝、学习绿等 |
+
+Chrome 原生组仅支持 9 种预设色，不能设置任意十六进制色值。设置页显示配色示意，实际颜色随浏览器主题变化。详见 [Chrome tabGroups Color](https://developer.chrome.com/docs/extensions/reference/api/tabGroups#type-Color)。
+
+### 外观和二次整理
+
+- **颜色和 emoji**：打开设置，选择配色和 `Emoji + 主题`，点击保存。已有的个人选择会保留，新用户默认采用灰蓝双色和 emoji。
+- **仅更新外观**：设置页的“保存并更新上次分组的外观”会调整上次整理生成的组（30 分钟内），不调用模型、不重新分类；手动改名、改色或改过成员的组会跳过。
+- **允许改变已有组**：在插件弹窗开启“重整已有标签组”后点击开始整理。当前窗口所有未固定的 HTTP/HTTPS 标签（包括已有组）都会参与去重和重新分类，旧组可以拆分、合并并重新命名。开关默认关闭，只对本次弹窗生效。
+- **撤销重整**：30 分钟内可恢复原来的分组成员、名称、颜色、折叠状态和重复页面。Chrome 删除空组后，恢复的组可能使用新的内部 ID，但外观与成员会恢复；后续被手动修改的标签会跳过。
+
+### 速度优化
+
+使用 `deepseek-flash` 并明确设置 `thinking: disabled`，避免为标签分类生成思考过程；仍只进行一次模型请求。输出预算随标签数增长，模型结果被截断时不修改标签页。改用新模型名本身不代表提速，因为旧别名也指向当前模型。实际等待时间还受网络、服务负载和标签数影响。
 
 ### 安装
 
@@ -36,6 +103,17 @@
 4. 点击工具栏中的 Tab Tidy 图标，首次输入 DeepSeek API Key。
 
 需要 Chrome 102 或更高版本。
+
+### 使用与更新
+
+1. 点击工具栏图标 → **开始整理**：默认仅处理当前窗口未分组的网页。
+2. 点击弹窗右上角设置按钮：选择命名语言、细致度、命名形式与配色，再点击 **保存分组规则**。
+3. 需要修改旧组：在弹窗勾选 **重整已有标签组** 再整理；仅改最近一次分组的外观，使用设置页的 **保存并更新上次分组的外观**。
+4. 对结果不满意：在 30 分钟内点击 **撤销本次整理**。
+
+更新已解压的扩展时，将原目录更新为新版代码，在 `chrome://extensions` 点击扩展的重新加载按钮，然后重新打开弹窗或设置页。API Key 与已保存偏好保留在同一 Chrome 配置中；移除扩展后重新安装不保证保留这些数据。
+
+源码与商店发布独立：推送到 GitHub 不会自动更新 Chrome Web Store。
 
 ### 打包
 
@@ -51,17 +129,34 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 npm test
 ```
 
+无需安装 npm 依赖。v1.3.2 当前有 43 项自动测试，覆盖 URL 去重、模型响应校验、配色、重整、并发保护和撤销。
+
+实现入口：[设置](src/settings.js)、[配色与外观](src/appearance.js)、[整理与撤销](src/organizer.js)、[模型请求](src/deepseek.js)。测试位于 [test/](test/)。
+
+界面验证使用隔离 Chromium，在桌面与 390px 窄屏检查预览、保存后刷新，以及新配色应用到真实标签组。该验证使用模拟 DeepSeek 响应，未测量真实 API 延迟或分类质量；非思考模式并不保证固定响应速度。
+
 ---
 
 ## English
 
 **Tab Tidy** is a local-first Chrome extension for turning the ungrouped web tabs in your current window into native Chrome tab groups with DeepSeek.
 
+### What's new in v1.3.2
+
+- Cleaner popup and settings: explanatory small print removed, while controls, color previews, and status feedback remain.
+- Six new palettes: graphite, forest, ocean, sunset, berry, and warm grey, bringing the total to ten.
+- Existing preferences are preserved; emoji naming, multilingual themes, optional regrouping, and safe undo remain available.
+
 ### Features
 
 - Uses DeepSeek to propose semantic native Chrome tab groups
+- Uses fast non-thinking mode with a bounded JSON response to reduce waiting time
+- Supports automatic, Simplified/Traditional Chinese, English, Japanese, Korean, German, French, and Spanish group naming
+- Supports balanced and detailed grouping, preferring `Theme · Subtopic` names
+- Offers concise, hierarchical, and emoji naming styles; new users default to emoji prefixes and a restrained grey/blue palette
+- Supports restrained, cool, graphite, forest, ocean, sunset, berry, warm grey, single-color, and theme-based palettes with an appearance preview
 - Removes duplicate pages after URL normalization, keeping the active tab first
-- Never changes pinned tabs or existing manual tab groups
+- Keeps pinned tabs unchanged and preserves existing groups by default; opt into regrouping to reclassify and rename existing groups
 - Keeps the browser unchanged on DeepSeek timeouts, invalid output, or tab-state changes
 - Prevents concurrent organization runs caused by repeated clicks
 - Offers a safe 30-minute undo without overwriting tabs changed afterwards
@@ -70,7 +165,7 @@ npm test
 ### Privacy
 
 - Your DeepSeek API key stays in this Chrome profile's `chrome.storage.local`
-- Only a candidate tab's title, domain, and query-free path are sent to DeepSeek
+- Only a candidate tab's title, domain, and query-free path are sent as tab data; naming preferences and browser language are also sent
 - The extension never reads or uploads page content and uses no proxy server
 
 ### Install
@@ -81,6 +176,12 @@ npm test
 4. Open the Tab Tidy toolbar icon and enter your DeepSeek API key once.
 
 Chrome 102 or later is required.
+
+Enable **重整已有标签组** in the popup to include existing groups in a run. It is off by default. Undo also restores the original group names, colors, collapsed states, memberships, and duplicates. The options page can update the last run's appearance without an AI request; it skips manually changed groups.
+
+### Updating an unpacked installation
+
+Update the files in the original extension folder, reload the extension at `chrome://extensions`, and reopen the popup or settings page. Your saved key and preferences remain in the same Chrome profile. Pushing source to GitHub does not publish a Chrome Web Store update.
 
 ### Package
 
@@ -96,17 +197,27 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 npm test
 ```
 
+No npm dependencies are needed. v1.3.2 has 43 automated tests. UI checks use isolated Chromium with real Chrome tab-group APIs and synthetic DeepSeek responses; live API latency and semantic grouping quality were not measured.
+
 ---
 
 ## Deutsch
 
 **Tab Tidy** ist eine lokale Chrome-Erweiterung. Sie ordnet die noch nicht gruppierten Web-Tabs des aktuellen Fensters mit DeepSeek in native Chrome-Tabgruppen ein.
 
+### Neu in v1.3.2
+
+- Vereinfachtes Popup und Einstellungen ohne zusätzliche Erklärungstexte; Bedienelemente, Farbvorschau und Statusmeldungen bleiben erhalten.
+- Sechs neue Farbschemata: Graphit, Wald, Ozean, Sonnenuntergang, Beere und warmes Grau; insgesamt zehn Optionen.
+- Bestehende Einstellungen bleiben erhalten.
+
 ### Funktionen
 
 - Erstellt mit DeepSeek thematische, native Chrome-Tabgruppen
+- Verwendet den Nicht-Denkmodus
+- Bietet mehrsprachige Namen, zwei Detailstufen, Emoji-Präfixe und zehn Farbpräferenzen
 - Entfernt doppelte Seiten nach URL-Normalisierung und behält bevorzugt den aktiven Tab
-- Verändert weder angeheftete Tabs noch bereits manuell erstellte Gruppen
+- Behält angeheftete Tabs und standardmäßig bestehende Gruppen bei; mit aktivierter Neuordnung können bestehende Gruppen neu eingeordnet und benannt werden
 - Lässt den Browser bei DeepSeek-Timeouts, ungültigen Antworten oder geänderten Tabs unverändert
 - Verhindert parallele Sortiervorgänge durch wiederholte Klicks
 - Bietet 30 Minuten lang ein sicheres Rückgängigmachen, ohne spätere manuelle Änderungen zu überschreiben
@@ -115,7 +226,7 @@ npm test
 ### Datenschutz
 
 - Der DeepSeek API-Key bleibt im `chrome.storage.local` des aktuellen Chrome-Profils
-- An DeepSeek gehen nur Titel, Domain und Pfad ohne Query-Parameter der Kandidaten-Tabs
+- Als Tabdaten gehen nur Titel, Domain und Pfad ohne Query-Parameter an DeepSeek; Namensregeln und Browsersprache werden ebenfalls übermittelt
 - Die Erweiterung liest oder überträgt keine Seiteninhalte und verwendet keinen Proxy
 
 ### Installation
@@ -126,6 +237,10 @@ npm test
 4. Das Tab-Tidy-Symbol in der Toolbar öffnen und den DeepSeek API-Key einmal eingeben.
 
 Chrome 102 oder neuer ist erforderlich.
+
+### Entpackte Erweiterung aktualisieren
+
+Die Dateien im ursprünglichen Erweiterungsordner aktualisieren, die Erweiterung unter `chrome://extensions` neu laden und das Popup oder die Einstellungen erneut öffnen. Schlüssel und Einstellungen bleiben im selben Chrome-Profil gespeichert. Ein GitHub-Push veröffentlicht kein Update im Chrome Web Store.
 
 ### Paket erstellen
 
@@ -140,6 +255,8 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 ```bash
 npm test
 ```
+
+Keine npm-Abhängigkeiten erforderlich. v1.3.2 enthält 43 automatisierte Tests. Die UI-Prüfung verwendet isoliertes Chromium, echte Chrome-Tabgruppen-APIs und simulierte DeepSeek-Antworten; reale API-Latenz und semantische Gruppierungsqualität wurden nicht gemessen.
 
 ## License
 

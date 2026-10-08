@@ -8,6 +8,28 @@ const tabs = [
   { id: 2, index: 1, windowId: 5, url: 'https://example.com/b', title: 'B', active: false, pinned: false, groupId: -1 },
 ];
 
+test('existing groups are excluded by default but can explicitly participate in regrouping', async () => {
+  const initialTabs = tabs.map(tab => ({ ...tab, groupId: 100 }));
+  let requests = 0;
+  let applied = 0;
+  const input = { apiKey: 'key', initialTabs, getLiveTabs: async () => initialTabs,
+    requestGroups: async ({ tabs: candidates }) => {
+      requests++;
+      assert.deepEqual(candidates.map(tab => tab.tabId), [1, 2]);
+      return { groups: [{ title: 'New topic', tabIds: [1, 2] }] };
+    }, apply: async () => { applied++; return {}; } };
+  await runOrganizeWorkflow(input);
+  assert.equal(requests, 0);
+  assert.equal(applied, 0);
+  await runOrganizeWorkflow({ ...input, includeGrouped: true });
+  assert.equal(requests, 1);
+  assert.equal(applied, 1);
+  await assert.rejects(runOrganizeWorkflow({ ...input, includeGrouped: true,
+    getLiveTabs: async () => initialTabs.map(tab => ({ ...tab, groupId: 200 })),
+  }), error => error.code === 'TAB_STATE_CHANGED');
+  assert.equal(applied, 1);
+});
+
 test('does not call the browser executor when the AI request fails', async () => {
   let applied = false;
 
