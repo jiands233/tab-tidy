@@ -55,7 +55,7 @@ test('uses the same theme color regardless of the order of groups', async () => 
   await applyOrganizePlan(api, { duplicateTabIds: [] }, [
     { title: '开发 · Shell', category: 'development', tabIds: [1, 2] },
     { title: 'AI · 安全研究', category: 'ai', tabIds: [3, 4] },
-  ], tabs);
+  ], tabs, { groupingPalette: 'theme' });
   assert.deepEqual(api.calls.filter(([op]) => op === 'update').map(([, , details]) => details.color), ['blue', 'purple']);
 });
 
@@ -83,7 +83,7 @@ test('creates groups before closing duplicate tabs and records an undo snapshot'
   assert.deepEqual(api.calls.map(([operation]) => operation), ['group', 'update', 'close']);
   assert.deepEqual(api.calls[1], ['update', 100, {
     title: 'Research',
-    color: 'blue',
+    color: 'grey',
     collapsed: false,
   }]);
   assert.deepEqual(result, {
@@ -93,7 +93,7 @@ test('creates groups before closing duplicate tabs and records an undo snapshot'
     snapshot: {
       windowId: 9,
       groupedTabIds: [1, 2, 3],
-      createdGroups: [{ groupId: 100, tabIds: [1, 2, 3] }],
+      createdGroups: [{ groupId: 100, tabIds: [1, 2, 3], title: 'Research', color: 'grey', category: 'general' }],
       originalPositions: [
         { id: 1, index: 0, url: 'https://example.com/one' },
         { id: 2, index: 1, url: 'https://example.com/two' },

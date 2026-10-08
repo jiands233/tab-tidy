@@ -1,4 +1,4 @@
-import { GROUPING_LANGUAGES, GROUPING_STYLES, normalizeGroupingSettings } from './src/settings.js';
+import { GROUPING_LANGUAGES, GROUPING_STYLES, GROUPING_PALETTES, normalizeGroupingSettings } from './src/settings.js';
 
 const setup = document.querySelector('#setup');
 const ready = document.querySelector('#ready');
@@ -6,6 +6,13 @@ const feedback = document.querySelector('#feedback');
 const result = document.querySelector('#result');
 const organizeButton = document.querySelector('#organize');
 const keyForm = document.querySelector('#keyForm');
+const includeGrouped = document.querySelector('#includeGrouped');
+
+includeGrouped.addEventListener('change', () => {
+  document.querySelector('#regroupHelp').textContent = includeGrouped.checked
+    ? '开启后重新分配当前窗口的已有组并改名；固定标签保留，支持撤销。'
+    : '关闭时保留已有组，只整理未分组标签。';
+});
 
 async function request(message) {
   const response = await chrome.runtime.sendMessage(message);
@@ -58,10 +65,12 @@ async function render() {
   const settings = normalizeGroupingSettings(status);
   const language = GROUPING_LANGUAGES.find(({ value }) => value === settings.groupingLanguage).label;
   const style = GROUPING_STYLES.find(({ value }) => value === settings.groupingStyle).label;
-  document.querySelector('#ruleSummary').textContent = `${settings.groupingDetail === 'detailed' ? '细致' : '平衡'}分组 / ${style} / ${language}`;
+  const palette = GROUPING_PALETTES.find(({ value }) => value === settings.groupingPalette).label;
+  document.querySelector('#ruleSummary').textContent = `${settings.groupingDetail === 'detailed' ? '细致' : '平衡'}分组 / ${style} / ${language} / ${palette}`;
   setup.hidden = status.hasApiKey;
   ready.hidden = !status.hasApiKey;
   organizeButton.disabled = status.isOrganizing || !runtimeReady;
+  includeGrouped.disabled = status.isOrganizing || !runtimeReady;
   organizeButton.querySelector('span').textContent = status.isOrganizing ? '正在整理…' : '开始整理';
   organizeButton.querySelector('b').hidden = status.isOrganizing || !runtimeReady;
   renderResult(status.lastResult, status.undoAvailable, status.isOrganizing || !runtimeReady);
@@ -74,7 +83,7 @@ async function organize() {
   organizeButton.querySelector('span').textContent = '正在整理…';
   organizeButton.querySelector('b').hidden = true;
   try {
-    const operation = await request({ type: 'organize' });
+    const operation = await request({ type: 'organize', includeGrouped: includeGrouped.checked });
     if (operation.groupCount === 0 && operation.duplicateCount === 0) {
       result.hidden = true;
       setFeedback(operation.message);
