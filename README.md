@@ -6,11 +6,21 @@
 
 <p align="center">A local-first Chrome extension that turns a crowded browser window into native tab groups with DeepSeek.</p>
 
+Current repository version: **v1.3.2** · Chrome **102+** · Bring your own DeepSeek API key.
+
+The repository version and Chrome Web Store version are released separately. Updating this repository does not publish a store update.
+
 ---
 
 ## 中文
 
 **Tab Tidy（标签页整理）** 是一个本地优先的 Chrome 扩展。点击插件栏图标后，它会使用 DeepSeek 按主题整理当前窗口中尚未分组的网页标签，并清理重复页面。
+
+### v1.3.2 更新
+
+- **更简洁的界面**：弹窗和设置页删除辅助说明小字；保留必要标题、选项、操作按钮、配色预览和状态反馈。
+- **10 套配色方案**：新增石墨、森林、海洋、日落、莓果、暖灰；不覆盖用户已有偏好。
+- **保留已有功能**：多语言主题命名、emoji 前缀、可选重整已有标签组，以及 30 分钟安全撤销。
 
 ### 功能
 
@@ -40,7 +50,7 @@
 - **细致模式**：先识别大主题，再拆分为具体任务，例如 `AI · 安全研究`、`开发 · Shell`；不会为了凑数创建只有一个标签的分组。
 - **平衡模式**：只保留边界清晰、共同目标明确的主题，减少过度拆分。
 - **命名形式**：简短主题如 `Shell 入门`；主题层级如 `开发 · Shell 入门`；图标主题如 `💻 开发 · Shell 入门`。Chrome 原生分组是平铺的，层级仅体现在组名中。
-- **颜色偏好**：默认使用灰蓝两色，可选蓝青紫冷色系、石墨（灰紫）、森林（灰绿）、海洋（蓝青）、日落（橙黄）、莓果（紫粉）、暖灰（灰橙）、统一单色（Chrome 的 9 种预设色之一）或按主题配色。按主题时 AI 为紫色、开发为蓝色、学习为绿色等；emoji 始终按内容主题选择。
+- **颜色偏好**：配色独立于命名语言与主题，支持下方 10 套方案；emoji 始终按内容主题选择。
 
 命名要求使用自然的短名词片语，保留 PyTorch、ChatGPT、Shell 等产品或技术名，不使用“其他”“资料”等笼统标签。例如，同一组 AI 安全研究页面可命名为：
 
@@ -57,16 +67,31 @@
 
 这些是规则示例，实际主题由标题和路径推断，不读取网页正文。关闭重整开关时，已有组的名称、颜色和成员保持不变。
 
-### v1.3.0：外观和二次整理
+### 选择配色
+
+| 方案 | 颜色 | 特点 |
+| --- | --- | --- |
+| 克制双色 | 灰 + 蓝 | 新用户默认 |
+| 冷色系 | 蓝 + 青 + 紫 | 三色循环 |
+| 石墨 | 灰 + 紫 | 双色循环 |
+| 森林 | 灰 + 绿 | 双色循环 |
+| 海洋 | 蓝 + 青 | 双色循环 |
+| 日落 | 橙 + 黄 | 双色循环 |
+| 莓果 | 紫 + 粉 | 双色循环 |
+| 暖灰 | 灰 + 橙 | 双色循环 |
+| 统一单色 | 选择一种预设色 | 所有组使用同色 |
+| 按主题配色 | 根据内容主题选择 | AI 紫、开发蓝、学习绿等 |
+
+Chrome 原生组仅支持 9 种预设色，不能设置任意十六进制色值。设置页显示配色示意，实际颜色随浏览器主题变化。详见 [Chrome tabGroups Color](https://developer.chrome.com/docs/extensions/reference/api/tabGroups#type-Color)。
+
+### 外观和二次整理
 
 - **颜色和 emoji**：打开设置，选择配色和 `Emoji + 主题`，点击保存。已有的个人选择会保留，新用户默认采用灰蓝双色和 emoji。
 - **仅更新外观**：设置页的“保存并更新上次分组的外观”会调整上次整理生成的组（30 分钟内），不调用模型、不重新分类；手动改名、改色或改过成员的组会跳过。
 - **允许改变已有组**：在插件弹窗开启“重整已有标签组”后点击开始整理。当前窗口所有未固定的 HTTP/HTTPS 标签（包括已有组）都会参与去重和重新分类，旧组可以拆分、合并并重新命名。开关默认关闭，只对本次弹窗生效。
 - **撤销重整**：30 分钟内可恢复原来的分组成员、名称、颜色、折叠状态和重复页面。Chrome 删除空组后，恢复的组可能使用新的内部 ID，但外观与成员会恢复；后续被手动修改的标签会跳过。
 
-Chrome 原生组仅支持 9 种预设色，不能设置任意十六进制色值。设置页显示配色示意，实际颜色随浏览器主题变化。详见 [Chrome tabGroups Color](https://developer.chrome.com/docs/extensions/reference/api/tabGroups#type-Color)。
-
-### v1.2.0 速度优化
+### 速度优化
 
 使用 `deepseek-flash` 并明确设置 `thinking: disabled`，避免为标签分类生成思考过程；仍只进行一次模型请求。输出预算随标签数增长，模型结果被截断时不修改标签页。改用新模型名本身不代表提速，因为旧别名也指向当前模型。实际等待时间还受网络、服务负载和标签数影响。
 
@@ -78,6 +103,17 @@ Chrome 原生组仅支持 9 种预设色，不能设置任意十六进制色值�
 4. 点击工具栏中的 Tab Tidy 图标，首次输入 DeepSeek API Key。
 
 需要 Chrome 102 或更高版本。
+
+### 使用与更新
+
+1. 点击工具栏图标 → **开始整理**：默认仅处理当前窗口未分组的网页。
+2. 点击弹窗右上角设置按钮：选择命名语言、细致度、命名形式与配色，再点击 **保存分组规则**。
+3. 需要修改旧组：在弹窗勾选 **重整已有标签组** 再整理；仅改最近一次分组的外观，使用设置页的 **保存并更新上次分组的外观**。
+4. 对结果不满意：在 30 分钟内点击 **撤销本次整理**。
+
+更新已解压的扩展时，将原目录更新为新版代码，在 `chrome://extensions` 点击扩展的重新加载按钮，然后重新打开弹窗或设置页。API Key 与已保存偏好保留在同一 Chrome 配置中；移除扩展后重新安装不保证保留这些数据。
+
+源码与商店发布独立：推送到 GitHub 不会自动更新 Chrome Web Store。
 
 ### 打包
 
@@ -93,11 +129,23 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 npm test
 ```
 
+无需安装 npm 依赖。v1.3.2 当前有 43 项自动测试，覆盖 URL 去重、模型响应校验、配色、重整、并发保护和撤销。
+
+实现入口：[设置](src/settings.js)、[配色与外观](src/appearance.js)、[整理与撤销](src/organizer.js)、[模型请求](src/deepseek.js)。测试位于 [test/](test/)。
+
+界面验证使用隔离 Chromium，在桌面与 390px 窄屏检查预览、保存后刷新，以及新配色应用到真实标签组。该验证使用模拟 DeepSeek 响应，未测量真实 API 延迟或分类质量；非思考模式并不保证固定响应速度。
+
 ---
 
 ## English
 
 **Tab Tidy** is a local-first Chrome extension for turning the ungrouped web tabs in your current window into native Chrome tab groups with DeepSeek.
+
+### What's new in v1.3.2
+
+- Cleaner popup and settings: explanatory small print removed, while controls, color previews, and status feedback remain.
+- Six new palettes: graphite, forest, ocean, sunset, berry, and warm grey, bringing the total to ten.
+- Existing preferences are preserved; emoji naming, multilingual themes, optional regrouping, and safe undo remain available.
 
 ### Features
 
@@ -131,6 +179,10 @@ Chrome 102 or later is required.
 
 Enable **重整已有标签组** in the popup to include existing groups in a run. It is off by default. Undo also restores the original group names, colors, collapsed states, memberships, and duplicates. The options page can update the last run's appearance without an AI request; it skips manually changed groups.
 
+### Updating an unpacked installation
+
+Update the files in the original extension folder, reload the extension at `chrome://extensions`, and reopen the popup or settings page. Your saved key and preferences remain in the same Chrome profile. Pushing source to GitHub does not publish a Chrome Web Store update.
+
 ### Package
 
 The root of a Chrome Web Store ZIP must contain `manifest.json` directly:
@@ -145,17 +197,25 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 npm test
 ```
 
+No npm dependencies are needed. v1.3.2 has 43 automated tests. UI checks use isolated Chromium with real Chrome tab-group APIs and synthetic DeepSeek responses; live API latency and semantic grouping quality were not measured.
+
 ---
 
 ## Deutsch
 
 **Tab Tidy** ist eine lokale Chrome-Erweiterung. Sie ordnet die noch nicht gruppierten Web-Tabs des aktuellen Fensters mit DeepSeek in native Chrome-Tabgruppen ein.
 
+### Neu in v1.3.2
+
+- Vereinfachtes Popup und Einstellungen ohne zusätzliche Erklärungstexte; Bedienelemente, Farbvorschau und Statusmeldungen bleiben erhalten.
+- Sechs neue Farbschemata: Graphit, Wald, Ozean, Sonnenuntergang, Beere und warmes Grau; insgesamt zehn Optionen.
+- Bestehende Einstellungen bleiben erhalten.
+
 ### Funktionen
 
 - Erstellt mit DeepSeek thematische, native Chrome-Tabgruppen
 - Verwendet den Nicht-Denkmodus
-- Bietet mehrsprachige Namen, zwei Detailstufen, Emoji-Präfixe und vier Farbpräferenzen
+- Bietet mehrsprachige Namen, zwei Detailstufen, Emoji-Präfixe und zehn Farbpräferenzen
 - Entfernt doppelte Seiten nach URL-Normalisierung und behält bevorzugt den aktiven Tab
 - Behält angeheftete Tabs und standardmäßig bestehende Gruppen bei; mit aktivierter Neuordnung können bestehende Gruppen neu eingeordnet und benannt werden
 - Lässt den Browser bei DeepSeek-Timeouts, ungültigen Antworten oder geänderten Tabs unverändert
@@ -178,6 +238,10 @@ npm test
 
 Chrome 102 oder neuer ist erforderlich.
 
+### Entpackte Erweiterung aktualisieren
+
+Die Dateien im ursprünglichen Erweiterungsordner aktualisieren, die Erweiterung unter `chrome://extensions` neu laden und das Popup oder die Einstellungen erneut öffnen. Schlüssel und Einstellungen bleiben im selben Chrome-Profil gespeichert. Ein GitHub-Push veröffentlicht kein Update im Chrome Web Store.
+
 ### Paket erstellen
 
 In einem Chrome-Web-Store-ZIP muss `manifest.json` direkt im Stammverzeichnis liegen:
@@ -191,6 +255,8 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 ```bash
 npm test
 ```
+
+Keine npm-Abhängigkeiten erforderlich. v1.3.2 enthält 43 automatisierte Tests. Die UI-Prüfung verwendet isoliertes Chromium, echte Chrome-Tabgruppen-APIs und simulierte DeepSeek-Antworten; reale API-Latenz und semantische Gruppierungsqualität wurden nicht gemessen.
 
 ## License
 
