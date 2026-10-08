@@ -50,6 +50,15 @@ const tabs = [
   { id: 4, index: 3, windowId: 9, url: 'https://example.com/one?utm_source=x', active: false },
 ];
 
+test('uses the same theme color regardless of the order of groups', async () => {
+  const api = makeApi();
+  await applyOrganizePlan(api, { duplicateTabIds: [] }, [
+    { title: '开发 · Shell', category: 'development', tabIds: [1, 2] },
+    { title: 'AI · 安全研究', category: 'ai', tabIds: [3, 4] },
+  ], tabs);
+  assert.deepEqual(api.calls.filter(([op]) => op === 'update').map(([, , details]) => details.color), ['blue', 'purple']);
+});
+
 function completeSnapshot() {
   return {
     windowId: 9,

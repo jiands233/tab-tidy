@@ -9,11 +9,15 @@ import {
   stampUndoSnapshot,
 } from './state.js';
 import { runOrganizeWorkflow } from './workflow.js';
+import { normalizeGroupingSettings } from './settings.js';
 
 const STORAGE_KEYS = {
   apiKey: 'deepseekApiKey',
   snapshot: 'lastOrganizeSnapshot',
   result: 'lastOrganizeResult',
+  groupingLanguage: 'groupingLanguage',
+  groupingDetail: 'groupingDetail',
+  groupingStyle: 'groupingStyle',
 };
 
 function chromeApi() {
@@ -47,15 +51,29 @@ async function currentWindowTabs() {
 
 async function organizeCurrentWindow() {
   const lockToken = await acquireOrganizeLock(chrome.storage.session);
+  const startedAt = Date.now();
   try {
     const { [STORAGE_KEYS.apiKey]: apiKey } = await chrome.storage.local.get(STORAGE_KEYS.apiKey);
+    const settings = normalizeGroupingSettings(await chrome.storage.local.get([
+      STORAGE_KEYS.groupingLanguage,
+      STORAGE_KEYS.groupingDetail,
+      STORAGE_KEYS.groupingStyle,
+    ]));
     const initialTabs = await currentWindowTabs();
     const windowId = initialTabs[0].windowId;
     const applied = await runOrganizeWorkflow({
       apiKey,
       initialTabs,
       getLiveTabs: () => chrome.tabs.query({ windowId }),
-      requestGroups: requestTabGroups,
+      requestGroups: ({ apiKey: requestApiKey, tabs }) => requestTabGroups({
+        apiKey: requestApiKey,
+        tabs,
+        language: settings.groupingLanguage,
+        detail: settings.groupingDetail,
+        style: settings.groupingStyle,
+        browserLanguage: chrome.i18n.getUILanguage(),
+      }),
+      style: settings.groupingStyle,
       apply: ({ plan, groups, tabs }) => applyOrganizePlan(chromeApi(), plan, groups, tabs),
     });
     if (!applied.snapshot) return applied;
@@ -66,6 +84,7 @@ async function organizeCurrentWindow() {
       groupedTabCount: applied.groupedTabCount,
       duplicateCount: applied.duplicateCount,
       completedAt,
+      elapsedMs: completedAt - startedAt,
       message: applied.groupCount === 0 && applied.duplicateCount === 0
         ? '没有发现可自动归组的标签。'
         : '整理完成。',
@@ -114,6 +133,9 @@ async function getStatus() {
     STORAGE_KEYS.apiKey,
     STORAGE_KEYS.snapshot,
     STORAGE_KEYS.result,
+    STORAGE_KEYS.groupingLanguage,
+    STORAGE_KEYS.groupingDetail,
+    STORAGE_KEYS.groupingStyle,
   ]);
   let snapshot = values[STORAGE_KEYS.snapshot];
   if (snapshot && !isUndoSnapshotActive(snapshot)) {
@@ -128,6 +150,7 @@ async function getStatus() {
     undoExpiresAt: snapshot?.expiresAt || null,
     isOrganizing: await isOrganizeLocked(chrome.storage.session),
     lastResult: values[STORAGE_KEYS.result] || null,
+    ...normalizeGroupingSettings(values),
   };
 }
 
@@ -144,6 +167,19 @@ async function handleMessage(message) {
     case 'clearApiKey':
       await chrome.storage.local.remove(STORAGE_KEYS.apiKey);
       return getStatus();
+    case 'savePreferences': {
+      const settings = normalizeGroupingSettings({
+        groupingLanguage: message.groupingLanguage,
+        groupingDetail: message.groupingDetail,
+        groupingStyle: message.groupingStyle,
+      });
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.groupingLanguage]: settings.groupingLanguage,
+        [STORAGE_KEYS.groupingDetail]: settings.groupingDetail,
+        [STORAGE_KEYS.groupingStyle]: settings.groupingStyle,
+      });
+      return getStatus();
+    }
     case 'organize':
       return organizeCurrentWindow();
     case 'undo':

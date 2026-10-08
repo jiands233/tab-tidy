@@ -11,7 +11,7 @@
       <header>
         <img class="brand-mark" src="assets/icon-48.png" alt="">
       </header>
-      <h1>DeepSeek API</h1>
+      <h1>整理偏好</h1>
       <p class="intro">仅保存在这台设备中</p>
       <section class="card">
         <div class="key-status">
@@ -26,6 +26,21 @@
             <button id="clearKey" class="danger" type="button">清除</button>
           </div>
         </form>
+      </section>
+      <section class="card">
+        <div class="section-heading">
+          <h2>分组规则</h2>
+          <p>让主题更突出，也可以按你的阅读语言命名。</p>
+        </div>
+        <label for="groupingLanguage">命名语言</label>
+        <select id="groupingLanguage"></select>
+        <label for="groupingDetail">分组细致度</label>
+        <select id="groupingDetail"></select>
+        <label for="groupingStyle">命名形式</label>
+        <select id="groupingStyle"></select>
+        <p class="help" id="namingExample" aria-live="polite"></p>
+        <button class="save full-width" id="savePreferences" type="button" disabled>保存分组规则</button>
+        <p class="help">同类主题使用一致颜色。只整理未分组标签，已分组标签不会重新命名。主题层级体现在组名中。</p>
       </section>
       <p id="feedback" role="status" aria-live="polite"></p>
     </main>

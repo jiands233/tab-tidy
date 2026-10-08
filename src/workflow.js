@@ -15,7 +15,7 @@ export function assertTargetsUnchanged(originalTabs, liveTabs, targetIds) {
   }
 }
 
-export async function runOrganizeWorkflow({ apiKey, initialTabs, getLiveTabs, requestGroups, apply }) {
+export async function runOrganizeWorkflow({ apiKey, initialTabs, getLiveTabs, requestGroups, apply, style = 'hierarchical' }) {
   if (!apiKey) throw new Error('请先保存 DeepSeek API Key。');
 
   const plan = buildOrganizePlan(initialTabs);
@@ -26,7 +26,7 @@ export async function runOrganizeWorkflow({ apiKey, initialTabs, getLiveTabs, re
   let groups = [];
   if (plan.aiTabs.length >= 2) {
     const modelPayload = await requestGroups({ apiKey, tabs: plan.aiTabs });
-    groups = validateModelGroups(modelPayload, new Set(plan.aiTabs.map((tab) => tab.tabId)));
+    groups = validateModelGroups(modelPayload, new Set(plan.aiTabs.map((tab) => tab.tabId)), { style });
   }
   if (groups.length === 0 && plan.duplicateTabIds.length === 0) {
     return { groupCount: 0, groupedTabCount: 0, duplicateCount: 0, snapshot: null, message: '没有发现可自动归组的标签。' };

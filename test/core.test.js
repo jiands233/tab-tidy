@@ -74,11 +74,31 @@ test('rejects malformed model groups instead of silently filtering them', () => 
   }
 });
 
-test('shortens an overly long model group title to twelve characters', () => {
+test('keeps an English theme and subtopic without the old twelve-character cutoff', () => {
   const groups = validateModelGroups(
-    { groups: [{ title: '人工智能招聘行业深度研究资料', tabIds: [21, 22] }] },
+    { groups: [{ title: 'AI · Safety Research', tabIds: [21, 22] }] },
     new Set([21, 22]),
   );
 
-  assert.deepEqual(groups, [{ title: '人工智能招聘行业深度研究', tabIds: [21, 22] }]);
+  assert.deepEqual(groups, [{ title: 'AI · Safety Research', tabIds: [21, 22] }]);
+});
+
+test('caps multilingual titles at forty graphemes without splitting emoji', () => {
+  const groups = validateModelGroups(
+    { groups: [{ title: `${'x'.repeat(39)}👩‍💻more`, tabIds: [1, 2] }] },
+    new Set([1, 2]),
+  );
+  assert.equal(groups[0].title, `${'x'.repeat(39)}👩‍💻`);
+});
+
+test('adds a consistent theme icon and rejects unsupported theme categories', () => {
+  assert.deepEqual(validateModelGroups(
+    { groups: [{ title: 'AI · 安全研究', category: 'ai', tabIds: [1, 2] }] },
+    new Set([1, 2]),
+    { style: 'icon' },
+  ), [{ title: '🤖 AI · 安全研究', category: 'ai', tabIds: [1, 2] }]);
+  assert.throws(() => validateModelGroups(
+    { groups: [{ title: 'Work', category: '__proto__', tabIds: [1, 2] }] },
+    new Set([1, 2]),
+  ), (error) => error.code === 'AI_INVALID_RESPONSE');
 });

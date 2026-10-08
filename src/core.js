@@ -76,7 +76,7 @@ export function buildOrganizePlan(tabs) {
   };
 }
 
-export function validateModelGroups(payload, knownTabIds) {
+export function validateModelGroups(payload, knownTabIds, { style = 'hierarchical' } = {}) {
   const invalid = () => {
     throw new OrganizerError('AI_INVALID_RESPONSE', 'DeepSeek 返回的分组结果无效，本次未修改标签页。');
   };
@@ -95,6 +95,8 @@ export function validateModelGroups(payload, knownTabIds) {
 
     const title = candidate.title.replace(/\s+/g, ' ').trim();
     if (!title) return invalid();
+    if (candidate.category !== undefined &&
+      (typeof candidate.category !== 'string' || !Object.hasOwn(GROUP_THEMES, candidate.category))) return invalid();
 
     for (const tabId of candidate.tabIds) {
       if (!Number.isInteger(tabId) || !knownTabIds.has(tabId) || claimedTabIds.has(tabId)) {
@@ -106,9 +108,25 @@ export function validateModelGroups(payload, knownTabIds) {
     const tabIds = [...candidate.tabIds];
     if (tabIds.length < 2) continue;
 
-    validGroups.push({ title: title.slice(0, 12), tabIds });
+    const icon = style === 'icon' ? `${(GROUP_THEMES[candidate.category] || GROUP_THEMES.general).icon} ` : '';
+    const segments = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(`${icon}${title}`)];
+    const group = { title: segments.slice(0, GROUP_TITLE_MAX_LENGTH).map(({ segment }) => segment).join('').trim(), tabIds };
+    if (candidate.category !== undefined) group.category = candidate.category;
+    validGroups.push(group);
   }
   return validGroups;
 }
 
+export const GROUP_TITLE_MAX_LENGTH = 40;
 export const GROUP_COLORS = ['blue', 'green', 'purple', 'cyan', 'orange', 'pink'];
+export const GROUP_THEMES = {
+  ai: { color: 'purple', icon: '🤖' },
+  development: { color: 'blue', icon: '💻' },
+  learning: { color: 'green', icon: '📚' },
+  research: { color: 'cyan', icon: '🔬' },
+  work: { color: 'orange', icon: '💼' },
+  media: { color: 'red', icon: '🎬' },
+  social: { color: 'pink', icon: '💬' },
+  shopping: { color: 'yellow', icon: '🛍️' },
+  general: { color: 'grey', icon: '📁' },
+};

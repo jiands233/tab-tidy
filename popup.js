@@ -1,3 +1,5 @@
+import { GROUPING_LANGUAGES, GROUPING_STYLES, normalizeGroupingSettings } from './src/settings.js';
+
 const setup = document.querySelector('#setup');
 const ready = document.querySelector('#ready');
 const feedback = document.querySelector('#feedback');
@@ -33,6 +35,12 @@ function renderResult(lastResult, undoAvailable, isOrganizing) {
   stats.className = 'stats';
   stats.textContent = `新建 ${lastResult.groupCount ?? 0} 组 · 归组 ${lastResult.groupedTabCount ?? 0} 个 · 去重 ${lastResult.duplicateCount ?? 0} 个`;
   result.append(title, stats);
+  if (Number.isFinite(lastResult.elapsedMs)) {
+    const timing = document.createElement('div');
+    timing.className = 'timing';
+    timing.textContent = `用时 ${(lastResult.elapsedMs / 1000).toFixed(1)} 秒`;
+    result.append(timing);
+  }
   if (undoAvailable) {
     const undo = document.createElement('button');
     undo.className = 'secondary';
@@ -47,6 +55,10 @@ function renderResult(lastResult, undoAvailable, isOrganizing) {
 async function render() {
   const status = await request({ type: 'getStatus' });
   const runtimeReady = status.runtimeVersion === chrome.runtime.getManifest().version;
+  const settings = normalizeGroupingSettings(status);
+  const language = GROUPING_LANGUAGES.find(({ value }) => value === settings.groupingLanguage).label;
+  const style = GROUPING_STYLES.find(({ value }) => value === settings.groupingStyle).label;
+  document.querySelector('#ruleSummary').textContent = `${settings.groupingDetail === 'detailed' ? '细致' : '平衡'}分组 / ${style} / ${language}`;
   setup.hidden = status.hasApiKey;
   ready.hidden = !status.hasApiKey;
   organizeButton.disabled = status.isOrganizing || !runtimeReady;

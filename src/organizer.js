@@ -1,4 +1,4 @@
-import { GROUP_COLORS, normalizeUrl } from './core.js';
+import { GROUP_COLORS, GROUP_THEMES, normalizeUrl } from './core.js';
 
 function originalPositionsFor(tabIds, tabs) {
   const tabById = new Map(tabs.map((tab) => [tab.id, tab]));
@@ -46,7 +46,7 @@ export async function applyOrganizePlan(api, plan, groups, tabs) {
       createdGroups.push({ groupId, tabIds: [...group.tabIds] });
       await api.updateGroup(groupId, {
         title: group.title,
-        color: GROUP_COLORS[index % GROUP_COLORS.length],
+        color: GROUP_THEMES[group.category]?.color || GROUP_COLORS[index % GROUP_COLORS.length],
         collapsed: false,
       });
     }

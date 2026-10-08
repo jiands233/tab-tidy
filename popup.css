@@ -30,6 +30,8 @@ input:focus { border-color: #aa3040; box-shadow: 0 0 0 3px #aa30401a; }
 .result { background: #f4f2ef; border: 1px solid #e3e0db; border-radius: 16px; color: #252525; margin-top: 20px; padding: 16px; }
 .result strong { display: block; font-size: 15px; font-weight: 650; letter-spacing: -.025em; margin-bottom: 8px; }
 .stats { color: #6d6964; display: flex; font-size: 11px; gap: 9px; }
+.rule-summary { color: #77736f; font-size: 11px; line-height: 1.6; margin: 0 0 12px; }
+.timing { color: #77736f; font-size: 11px; margin-top: 7px; }
 .secondary { background: #fff; border: 1px solid #dbd6d0; border-radius: 9px; color: #55504b; cursor: pointer; font-size: 11px; font-weight: 600; margin-top: 13px; padding: 7px 10px; transition: background-color 160ms ease, transform 100ms ease-out; }
 .secondary:hover { background: #f0ece7; }
 .secondary:active { transform: scale(.97); }
