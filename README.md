@@ -20,7 +20,6 @@
 - 支持平衡和细致两种分组策略，优先使用“主题 · 子主题”突出具体任务
 - 支持简短主题、主题层级、emoji 主题三种命名形式，新用户默认 emoji 前缀
 - 配色支持克制双色、冷色系、统一单色和按主题配色，新用户默认灰蓝双色
-- 弹窗显示当前规则和最近一次整理的实际耗时
 - 规范化 URL 后清理重复页面，优先保留当前激活标签
 - 固定标签始终保留；默认保留已有组，也可开启“重整已有标签组”重新分类和改名
 - DeepSeek 超时、异常输出或标签状态变化时保持浏览器原状
@@ -69,7 +68,7 @@ Chrome 原生组仅支持 9 种预设色，不能设置任意十六进制色值�
 
 ### v1.2.0 速度优化
 
-使用 `deepseek-flash` 并明确设置 `thinking: disabled`，避免为标签分类生成思考过程；仍只进行一次模型请求。输出预算随标签数增长，模型结果被截断时不修改标签页。改用新模型名本身不代表提速，因为旧别名也指向当前模型。实际等待时间还受网络、服务负载和标签数影响，弹窗耗时可用于本机对比。
+使用 `deepseek-flash` 并明确设置 `thinking: disabled`，避免为标签分类生成思考过程；仍只进行一次模型请求。输出预算随标签数增长，模型结果被截断时不修改标签页。改用新模型名本身不代表提速，因为旧别名也指向当前模型。实际等待时间还受网络、服务负载和标签数影响。
 
 ### 安装
 
@@ -108,7 +107,6 @@ npm test
 - Supports balanced and detailed grouping, preferring `Theme · Subtopic` names
 - Offers concise, hierarchical, and emoji naming styles; new users default to emoji prefixes and a restrained grey/blue palette
 - Supports restrained, cool, single-color, and theme-based palettes with an appearance preview
-- Shows the active rules and measured organization time in the popup
 - Removes duplicate pages after URL normalization, keeping the active tab first
 - Keeps pinned tabs unchanged and preserves existing groups by default; opt into regrouping to reclassify and rename existing groups
 - Keeps the browser unchanged on DeepSeek timeouts, invalid output, or tab-state changes
@@ -156,7 +154,7 @@ npm test
 ### Funktionen
 
 - Erstellt mit DeepSeek thematische, native Chrome-Tabgruppen
-- Verwendet den Nicht-Denkmodus und zeigt die gemessene Bearbeitungszeit an
+- Verwendet den Nicht-Denkmodus
 - Bietet mehrsprachige Namen, zwei Detailstufen, Emoji-Präfixe und vier Farbpräferenzen
 - Entfernt doppelte Seiten nach URL-Normalisierung und behält bevorzugt den aktiven Tab
 - Behält angeheftete Tabs und standardmäßig bestehende Gruppen bei; mit aktivierter Neuordnung können bestehende Gruppen neu eingeordnet und benannt werden

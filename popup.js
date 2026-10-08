@@ -1,5 +1,3 @@
-import { GROUPING_LANGUAGES, GROUPING_STYLES, GROUPING_PALETTES, normalizeGroupingSettings } from './src/settings.js';
-
 const setup = document.querySelector('#setup');
 const ready = document.querySelector('#ready');
 const feedback = document.querySelector('#feedback');
@@ -7,12 +5,6 @@ const result = document.querySelector('#result');
 const organizeButton = document.querySelector('#organize');
 const keyForm = document.querySelector('#keyForm');
 const includeGrouped = document.querySelector('#includeGrouped');
-
-includeGrouped.addEventListener('change', () => {
-  document.querySelector('#regroupHelp').textContent = includeGrouped.checked
-    ? '开启后重新分配当前窗口的已有组并改名；固定标签保留，支持撤销。'
-    : '关闭时保留已有组，只整理未分组标签。';
-});
 
 async function request(message) {
   const response = await chrome.runtime.sendMessage(message);
@@ -38,16 +30,7 @@ function renderResult(lastResult, undoAvailable, isOrganizing) {
   result.replaceChildren();
   const title = document.createElement('strong');
   title.textContent = lastResult.message || '最近一次整理';
-  const stats = document.createElement('div');
-  stats.className = 'stats';
-  stats.textContent = `新建 ${lastResult.groupCount ?? 0} 组 · 归组 ${lastResult.groupedTabCount ?? 0} 个 · 去重 ${lastResult.duplicateCount ?? 0} 个`;
-  result.append(title, stats);
-  if (Number.isFinite(lastResult.elapsedMs)) {
-    const timing = document.createElement('div');
-    timing.className = 'timing';
-    timing.textContent = `用时 ${(lastResult.elapsedMs / 1000).toFixed(1)} 秒`;
-    result.append(timing);
-  }
+  result.append(title);
   if (undoAvailable) {
     const undo = document.createElement('button');
     undo.className = 'secondary';
@@ -62,11 +45,6 @@ function renderResult(lastResult, undoAvailable, isOrganizing) {
 async function render() {
   const status = await request({ type: 'getStatus' });
   const runtimeReady = status.runtimeVersion === chrome.runtime.getManifest().version;
-  const settings = normalizeGroupingSettings(status);
-  const language = GROUPING_LANGUAGES.find(({ value }) => value === settings.groupingLanguage).label;
-  const style = GROUPING_STYLES.find(({ value }) => value === settings.groupingStyle).label;
-  const palette = GROUPING_PALETTES.find(({ value }) => value === settings.groupingPalette).label;
-  document.querySelector('#ruleSummary').textContent = `${settings.groupingDetail === 'detailed' ? '细致' : '平衡'}分组 / ${style} / ${language} / ${palette}`;
   setup.hidden = status.hasApiKey;
   ready.hidden = !status.hasApiKey;
   organizeButton.disabled = status.isOrganizing || !runtimeReady;
