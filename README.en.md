@@ -22,19 +22,33 @@
 
 ---
 
-**Tab Tidy** is a Chrome extension powered by DeepSeek. It groups web tabs in your current window by topic, removes duplicate pages, and lets you undo the result. Groups appear directly in Chrome's native tab bar.
+**Tab Tidy** is a Chrome extension supporting DeepSeek, OpenAI-compatible APIs, and Anthropic APIs. It groups web tabs in your current window by topic, removes duplicate pages, and lets you undo the result. Groups appear directly in Chrome's native tab bar.
 
-Current source version: **v1.3.2**. Requires **Chrome 102+** and your own **DeepSeek API key**. AI classification needs an internet connection; the extension calls DeepSeek directly, with no application proxy server.
+Current source version: **v1.4.0**. Requires **Chrome 102+** and an **API key for your chosen service**; local services can omit the key. The extension calls your configured API directly, with no application proxy server.
 
 ## Quick start
 
 1. [Download the source ZIP](https://github.com/jiands233/tab-tidy/archive/refs/heads/main.zip) and extract it, or clone this repository.
 2. Open `chrome://extensions` and enable **Developer mode**.
 3. Click **Load unpacked** and choose the folder containing `manifest.json`.
-4. Open Tab Tidy from the Chrome toolbar, enter your DeepSeek API key, and click **保存并开始使用** (Save and get started).
+4. Open Tab Tidy from the Chrome toolbar. For the default DeepSeek service, enter your key and click **保存并开始使用** (Save and get started). For another service, click **选择其他 AI 服务** (Choose another AI service).
 5. Switch to the window you want to organize and click **开始整理** (Organize).
 
 By default, only **unpinned, ungrouped HTTP/HTTPS tabs in the current window** are processed. Pinned tabs, existing groups, and internal browser pages are preserved.
+
+## Configure an AI service
+
+Open **设置 → AI 服务** (Settings → AI service), choose the API type, enter its base URL, model name, and key, then click **保存 API 配置** (Save API configuration).
+
+| API type | Example base URL | Request format |
+| --- | --- | --- |
+| DeepSeek (default) | `https://api.deepseek.com` | Chat Completions with thinking disabled |
+| OpenAI-compatible | `https://api.openai.com/v1` or a compatible service URL | `POST /chat/completions`, Bearer authentication |
+| Anthropic | `https://api.anthropic.com/v1` or a compatible service URL | `POST /messages`, `x-api-key` authentication |
+
+Enter a model name that your service supports; the extension does not guess or fetch model lists. The base URL can include `/v1` or a gateway path prefix; full endpoint URLs are also accepted. Only these two protocols are supported, not the OpenAI Responses API.
+
+Remote URLs require HTTPS. Local services at `http://localhost:port/v1` or `http://127.0.0.1:port/v1` may use HTTP and omit the key. When saving a custom service, Chrome requests access to that host as needed; denying access leaves the configuration unchanged. A blank key retains the saved key only for the same protocol and base URL. Changing either requires the matching key. Existing DeepSeek settings remain compatible.
 
 ## What it does
 
@@ -89,7 +103,7 @@ Chrome supports nine preset group colors. Their appearance depends on the browse
 ## Privacy and permissions
 
 - **Local storage:** Your API key and preferences are stored in the current Chrome profile's `chrome.storage.local`, without Chrome Sync.
-- **Direct requests:** Your API key authenticates requests to DeepSeek. Classification data includes each candidate tab's numeric ID, title, domain, and path, along with naming instructions and browser language. URL query parameters and fragments are not sent to the model.
+- **Direct requests:** Your API key authenticates requests to your configured service. Classification data includes each candidate tab's numeric ID, title, domain, and path, along with naming instructions and browser language. URL query parameters and fragments are not sent to the model. If you use a third-party gateway, this data is sent to that gateway.
 - **No page content access:** The extension neither reads nor uploads page bodies and uses no application proxy server. Titles and paths can still contain sensitive information; review your tabs before organizing.
 
 <details>
@@ -100,7 +114,8 @@ Chrome supports nine preset group colors. Their appearance depends on the browse
 | `tabs` | Read tab metadata, move tabs, close duplicates, and reopen pages during undo |
 | `tabGroups` | Create and update native Chrome tab groups |
 | `storage` | Save your API key, preferences, and operation state |
-| `https://api.deepseek.com/*` | Call the DeepSeek API directly |
+| `https://api.deepseek.com/*` | Default DeepSeek service |
+| Optional API host access | Requested only for the host you select when saving a custom service |
 
 </details>
 
@@ -108,7 +123,7 @@ Chrome supports nine preset group colors. Their appearance depends on the browse
 
 **How do I undo?** Click **撤销本次整理** (Undo this run) in the popup within 30 minutes. Undo restores group members, names, colors, and collapsed states, and reopens duplicates closed by that run. Tabs changed manually afterwards are skipped. If an original group was deleted, its restored internal ID may differ.
 
-**What if a request fails?** Organization is not applied when DeepSeek times out or returns invalid or truncated output. Tab-state changes are checked before applying a result, and repeated clicks cannot start concurrent runs. Requests currently use `deepseek-flash` with thinking disabled; waiting time depends on the network, service load, and number of tabs.
+**What if a request fails?** Organization is not applied when the AI service times out or returns invalid or truncated output. Tab-state changes are checked before applying a result, and repeated clicks cannot start concurrent runs. DeepSeek defaults to `deepseek-flash` with thinking disabled; other services use your configured model. Waiting time depends on the network, service load, and number of tabs.
 
 **How do I update?** Update the source in the original extension folder, reload the extension at `chrome://extensions`, and reopen the popup or Settings. Your key and preferences remain in the same Chrome profile; uninstalling and reinstalling may remove them. Source and Chrome Web Store releases are separate: updating GitHub does not publish a store update.
 
@@ -122,7 +137,7 @@ Use a Node.js version that supports `node --test`. No npm dependencies or build 
 npm test
 ```
 
-Entry points: [grouping rules](src/settings.js) · [appearance](src/appearance.js) · [organization and undo](src/organizer.js) · [model requests](src/deepseek.js) · [tests](test/). Automated tests cover deduplication, response validation, palettes, regrouping, concurrency protection, and undo. Model responses are mocked; these tests do not measure live API latency or classification quality.
+Entry points: [grouping rules](src/settings.js) · [appearance](src/appearance.js) · [organization and undo](src/organizer.js) · [API configuration](src/ai-config.js) · [model requests](src/ai.js) · [tests](test/). Automated tests cover deduplication, response validation, palettes, regrouping, concurrency protection, and undo. Model responses are mocked; these tests do not measure live API latency or classification quality.
 
 <details>
 <summary>Create a Chrome Web Store upload package</summary>
@@ -134,6 +149,15 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 ```
 
 Creating the ZIP does not upload or publish it to the store.
+
+</details>
+
+<details>
+<summary>What's new in v1.4.0</summary>
+
+- Added OpenAI Chat Completions and Anthropic Messages APIs with configurable URLs and models.
+- Optional host access, local-service support, and compatibility with existing DeepSeek keys.
+- Response validation, concurrency protection, and safe undo are preserved.
 
 </details>
 

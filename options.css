@@ -20,6 +20,7 @@ label { color: #4d4945; display: block; font-size: 12px; font-weight: 600; margi
 input, select { background: #fff; border: 1px solid #dfddd9; border-radius: 12px; font: inherit; outline: 0; padding: 12px; transition: border-color 160ms ease, box-shadow 160ms ease; width: 100%; }
 input:focus, select:focus { border-color: #aa3040; box-shadow: 0 0 0 3px #aa30401a; }
 .card select + label { margin-top: 16px; }
+.card input + label { margin-top: 16px; }
 .palette-label, #singleColorRow label { margin-top: 18px; }
 .group-preview { display: flex; flex-wrap: wrap; gap: 7px; margin: 16px 0 8px; }
 .preview-group { border-radius: 8px; font-size: 11px; font-weight: 600; line-height: 1.6; padding: 6px 9px; }

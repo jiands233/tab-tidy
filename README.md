@@ -22,19 +22,33 @@
 
 ---
 
-**Tab Tidy（标签页整理）** 是一个使用 DeepSeek 的 Chrome 扩展：按主题归组当前窗口的网页，清理重复页面，并支持撤销。分组直接显示在 Chrome 原生标签栏中。
+**Tab Tidy（标签页整理）** 是一个支持 DeepSeek、OpenAI 兼容接口和 Anthropic 接口的 Chrome 扩展：按主题归组当前窗口的网页，清理重复页面，并支持撤销。分组直接显示在 Chrome 原生标签栏中。
 
-当前源码版本 **v1.3.2**。需要 **Chrome 102+** 和你自己的 **DeepSeek API Key**；AI 分类需要联网，扩展直接请求 DeepSeek，无自建中转服务器。
+当前源码版本 **v1.4.0**。需要 **Chrome 102+** 和所选服务的 **API Key**；本机服务可不填 Key。扩展直接请求你配置的 API 地址，无自建中转服务器。
 
 ## 快速开始
 
 1. [下载源码 ZIP](https://github.com/jiands233/tab-tidy/archive/refs/heads/main.zip) 并解压，或克隆本仓库。
 2. 打开 `chrome://extensions`，开启右上角的 **开发者模式**。
 3. 点击 **加载已解压的扩展程序**，选择包含 `manifest.json` 的文件夹。
-4. 在 Chrome 工具栏打开 Tab Tidy，输入 DeepSeek API Key，点击 **保存并开始使用**。
+4. 在 Chrome 工具栏打开 Tab Tidy。使用默认 DeepSeek 时，输入 Key 并点击 **保存并开始使用**；使用其他服务时，点击 **选择其他 AI 服务** 完成配置。
 5. 切换到想整理的窗口，点击 **开始整理**。
 
 默认只整理当前窗口中**未固定、未分组的 HTTP/HTTPS 标签页**。固定标签、已有组和浏览器内部页面会保留。
+
+## 配置 AI 服务
+
+打开 **设置 → AI 服务**，选择 API 类型，填写 API 地址、模型名称和 Key，点击 **保存 API 配置**。
+
+| API 类型 | API 地址示例 | 请求格式 |
+| --- | --- | --- |
+| DeepSeek（默认） | `https://api.deepseek.com` | Chat Completions，保留非思考模式 |
+| OpenAI 兼容 | `https://api.openai.com/v1` 或兼容服务的地址 | `POST /chat/completions`，Bearer 认证 |
+| Anthropic | `https://api.anthropic.com/v1` 或兼容服务的地址 | `POST /messages`，`x-api-key` 认证 |
+
+模型名称必须填写该服务实际支持的名称，不会自动猜测或查询模型列表。API 地址可以包含 `/v1` 或网关路径前缀，也可粘贴完整请求地址；仅支持上述两个协议，不包括 OpenAI Responses API。
+
+远程地址须使用 HTTPS。本机 `http://localhost:端口/v1` 或 `http://127.0.0.1:端口/v1` 可使用 HTTP，并可留空 Key。保存自定义地址时，Chrome 会按需申请访问该主机的权限；拒绝授权不会保存配置。Key 只在相同协议和地址下可留空保留，切换地址或协议须填写对应 Key。已有 DeepSeek 配置自动兼容。
 
 ## 能做什么
 
@@ -89,7 +103,7 @@ Chrome 原生标签组支持九种预设色，实际显示随浏览器主题变�
 ## 隐私与权限
 
 - **本地保存**：API Key 和偏好保存在当前 Chrome 配置的 `chrome.storage.local`，不使用 Chrome 同步。
-- **直接请求**：API Key 用于向 DeepSeek 认证；分类数据包括候选标签的数字 ID、标题、域名和路径，以及命名规则与浏览器语言。URL 查询参数和片段不发送给模型。
+- **直接请求**：API Key 用于向你配置的服务认证；分类数据包括候选标签的数字 ID、标题、域名和路径，以及命名规则与浏览器语言。URL 查询参数和片段不发送给模型。使用第三方网关时，这些数据会发送至该网关。
 - **不读取正文**：扩展不读取或上传网页正文，也不使用自建代理服务器。标签标题和路径本身仍可能包含敏感信息，整理前请留意。
 
 <details>
@@ -100,7 +114,8 @@ Chrome 原生标签组支持九种预设色，实际显示随浏览器主题变�
 | `tabs` | 获取标签信息，移动、关闭重复标签，并在撤销时重开页面 |
 | `tabGroups` | 创建和调整 Chrome 原生标签组 |
 | `storage` | 保存 API Key、偏好和操作状态 |
-| `https://api.deepseek.com/*` | 直接调用 DeepSeek API |
+| `https://api.deepseek.com/*` | 默认 DeepSeek 服务 |
+| 可选的 API 主机权限 | 保存自定义服务时，仅申请你选择的主机，用于直接调用其 API |
 
 </details>
 
@@ -108,7 +123,7 @@ Chrome 原生标签组支持九种预设色，实际显示随浏览器主题变�
 
 **如何撤销？** 整理后在弹窗点击 **撤销本次整理**，有效期为 30 分钟。撤销会恢复分组成员、名称、颜色、折叠状态，并重开本次关闭的重复页面；之后手动修改的标签会跳过。原组被删除时，恢复后的内部 ID 可能改变。
 
-**请求失败会怎样？** DeepSeek 超时、结果无效或截断时不会应用整理；执行前也会检查标签状态变化，并阻止重复点击触发并发整理。当前请求使用 `deepseek-flash` 非思考模式；实际等待时间取决于网络、服务负载与标签数。
+**请求失败会怎样？** AI 超时、结果无效或截断时不会应用整理；执行前也会检查标签状态变化，并阻止重复点击触发并发整理。DeepSeek 默认使用 `deepseek-flash` 非思考模式；其他服务使用所填模型。实际等待时间取决于网络、服务负载与标签数。
 
 **怎样更新？** 更新原扩展文件夹的源码，在 `chrome://extensions` 点击扩展的重新加载按钮，再重新打开弹窗或设置页。同一 Chrome 配置中的 Key 和偏好会保留；卸载后重装不保证保留。源码和 Chrome Web Store 分别发布，GitHub 更新不会自动发布商店更新。
 
@@ -122,7 +137,7 @@ Chrome 原生标签组支持九种预设色，实际显示随浏览器主题变�
 npm test
 ```
 
-实现入口：[分组规则](src/settings.js) · [配色与外观](src/appearance.js) · [整理与撤销](src/organizer.js) · [模型请求](src/deepseek.js) · [测试](test/)。自动测试覆盖去重、响应校验、配色、重整、并发保护和撤销；模型响应使用模拟数据，不能据此判断真实 API 延迟或分类质量。
+实现入口：[分组规则](src/settings.js) · [配色与外观](src/appearance.js) · [整理与撤销](src/organizer.js) · [API 配置](src/ai-config.js) · [模型请求](src/ai.js) · [测试](test/)。自动测试覆盖去重、响应校验、配色、重整、并发保护和撤销；模型响应使用模拟数据，不能据此判断真实 API 延迟或分类质量。
 
 <details>
 <summary>创建 Chrome Web Store 上传包</summary>
@@ -134,6 +149,15 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 ```
 
 创建 ZIP 不会自动上传或发布到商店。
+
+</details>
+
+<details>
+<summary>v1.4.0 更新说明</summary>
+
+- 新增 OpenAI Chat Completions 和 Anthropic Messages 接口，支持自定义地址与模型。
+- 按主机申请可选权限，支持本机服务，兼容已有 DeepSeek Key。
+- 保留响应校验、并发保护和安全撤销。
 
 </details>
 

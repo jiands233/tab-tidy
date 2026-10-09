@@ -1,9 +1,8 @@
 import { OrganizerError, toOrganizerError } from './errors.js';
 import { GROUP_THEMES } from './core.js';
+import { normalizeApiConfig, validateApiConfig, apiEndpoint } from './ai-config.js';
 
-const ENDPOINT = 'https://api.deepseek.com/chat/completions';
-export const DEEPSEEK_TIMEOUT_MS = 30_000;
-export const DEEPSEEK_MODEL = 'deepseek-flash';
+export const AI_TIMEOUT_MS = 30_000;
 const MIN_OUTPUT_TOKENS = 512;
 const MAX_OUTPUT_TOKENS = 16384;
 
@@ -57,92 +56,114 @@ function parseModelContent(content) {
   try {
     return JSON.parse(normalized);
   } catch {
-    throw new OrganizerError('AI_INVALID_RESPONSE', 'DeepSeek 返回的分组结果无效，本次未修改标签页。');
+    throw new OrganizerError('AI_INVALID_RESPONSE', 'AI 返回的分组结果无效，本次未修改标签页。');
   }
+}
+
+function modelRequest(config, instruction, tabs) {
+  const headers = { 'Content-Type': 'application/json' };
+  const content = JSON.stringify({ tabs });
+  const budget = outputTokenLimit(tabs.length);
+  if (config.provider === 'anthropic') {
+    if (config.apiKey) headers['x-api-key'] = config.apiKey;
+    headers['anthropic-version'] = '2023-06-01';
+    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+    return { headers, body: {
+      model: config.model,
+      max_tokens: budget,
+      system: instruction,
+      messages: [{ role: 'user', content }],
+    } };
+  }
+
+  if (config.apiKey) headers.Authorization = `Bearer ${config.apiKey}`;
+  const body = {
+    model: config.model,
+    messages: [{ role: 'system', content: instruction }, { role: 'user', content }],
+  };
+  // OpenAI's current API uses max_completion_tokens. Most compatible servers use max_tokens.
+  const tokenField = new URL(config.baseUrl).hostname === 'api.openai.com' ? 'max_completion_tokens' : 'max_tokens';
+  body[tokenField] = budget;
+  if (config.provider === 'deepseek') {
+    body.temperature = 0.1;
+    body.thinking = { type: 'disabled' };
+    body.response_format = { type: 'json_object' };
+  }
+  return { headers, body };
+}
+
+function responseContent(body, provider) {
+  if (provider === 'anthropic') {
+    if (body?.stop_reason !== 'end_turn' || !Array.isArray(body.content) ||
+      body.content.some(block => block?.type !== 'text' || typeof block.text !== 'string')) {
+      throw new OrganizerError('AI_INVALID_RESPONSE', 'AI 分组结果不完整或无效，本次未修改标签页。');
+    }
+    return body.content.map(block => block.text).join('');
+  }
+  const choice = body?.choices?.[0];
+  if (choice?.finish_reason && choice.finish_reason !== 'stop') {
+    throw new OrganizerError('AI_INVALID_RESPONSE', 'AI 分组结果不完整，本次未修改标签页。');
+  }
+  return choice?.message?.content;
 }
 
 export async function requestTabGroups({
   apiKey,
+  config,
   tabs,
   language = 'auto',
   detail = 'detailed',
   style = 'hierarchical',
   browserLanguage = 'en',
   fetchImpl = fetch,
-  timeoutMs = DEEPSEEK_TIMEOUT_MS,
+  timeoutMs = AI_TIMEOUT_MS,
   abortController = new AbortController(),
 }) {
-  if (!apiKey) throw new Error('请先保存 DeepSeek API Key。');
-
+  const settings = validateApiConfig(config ?? normalizeApiConfig({ apiKey }));
+  const requestData = modelRequest(settings,
+    buildGroupingInstruction({ language, detail, style, browserLanguage }), tabs);
   let timeoutId;
   try {
     const timeout = new Promise((_, reject) => {
       timeoutId = setTimeout(() => {
         abortController.abort();
-        reject(new OrganizerError('AI_TIMEOUT', 'DeepSeek 响应超时，本次未修改标签页。'));
+        reject(new OrganizerError('AI_TIMEOUT', 'AI 响应超时，本次未修改标签页。'));
       }, timeoutMs);
     });
     const request = (async () => {
-      const response = await fetchImpl(ENDPOINT, {
+      const response = await fetchImpl(apiEndpoint(settings), {
         method: 'POST',
         signal: abortController.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
-          temperature: 0.1,
-          thinking: { type: 'disabled' },
-          max_tokens: outputTokenLimit(tabs.length),
-          response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: buildGroupingInstruction({ language, detail, style, browserLanguage }),
-            },
-            { role: 'user', content: JSON.stringify({ tabs }) },
-          ],
-        }),
+        redirect: 'error',
+        credentials: 'omit',
+        headers: requestData.headers,
+        body: JSON.stringify(requestData.body),
       });
 
       if (!response.ok) {
-        let message = `HTTP ${response.status}`;
-        try {
-          const body = await response.json();
-          message = body?.error?.message || message;
-        } catch {
-          // Keep the HTTP status when the response is not JSON.
-        }
         if (response.status === 401 || response.status === 403) {
-          throw new OrganizerError('AI_AUTH', 'DeepSeek API Key 无效，请前往设置检查。');
+          throw new OrganizerError('AI_AUTH', 'API Key 无效或无权访问，请前往设置检查。');
         }
         if (response.status === 429) {
-          throw new OrganizerError('AI_RATE_LIMIT', 'DeepSeek 请求过于频繁，请稍后重试。');
+          throw new OrganizerError('AI_RATE_LIMIT', 'AI 请求过于频繁或额度不足，请稍后重试。');
         }
-        throw new OrganizerError('DEEPSEEK_REQUEST_FAILED', `DeepSeek 请求失败：${message}`);
+        // Do not echo server-controlled error bodies, which may contain credentials or tab data.
+        throw new OrganizerError('AI_REQUEST_FAILED', `AI 请求失败（HTTP ${response.status}），请检查 API 地址、模型和额度。`);
       }
-
       let body;
-      try {
-        body = await response.json();
-      } catch (error) {
-        throw toOrganizerError(error, 'AI_INVALID_RESPONSE', 'DeepSeek 返回的分组结果无效，本次未修改标签页。');
+      try { body = await response.json(); }
+      catch (error) {
+        throw toOrganizerError(error, 'AI_INVALID_RESPONSE', 'AI 返回的分组结果无效，本次未修改标签页。');
       }
-      const choice = body?.choices?.[0];
-      if (choice?.finish_reason && choice.finish_reason !== 'stop') {
-        throw new OrganizerError('AI_INVALID_RESPONSE', 'DeepSeek 分组结果不完整，本次未修改标签页。');
-      }
-      return parseModelContent(choice?.message?.content);
+      return parseModelContent(responseContent(body, settings.provider));
     })();
-
     return await Promise.race([request, timeout]);
   } catch (error) {
     if (error instanceof OrganizerError) throw error;
     if (abortController.signal.aborted) {
-      throw new OrganizerError('AI_TIMEOUT', 'DeepSeek 响应超时，本次未修改标签页。');
+      throw new OrganizerError('AI_TIMEOUT', 'AI 响应超时，本次未修改标签页。');
     }
-    throw toOrganizerError(error, 'DEEPSEEK_REQUEST_FAILED', '无法连接 DeepSeek，请检查网络后重试。');
+    throw toOrganizerError(error, 'AI_REQUEST_FAILED', '无法连接 AI 服务，请检查网络和 API 地址后重试。');
   } finally {
     clearTimeout(timeoutId);
   }

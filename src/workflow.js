@@ -15,8 +15,7 @@ export function assertTargetsUnchanged(originalTabs, liveTabs, targetIds, { incl
   }
 }
 
-export async function runOrganizeWorkflow({ apiKey, initialTabs, getLiveTabs, requestGroups, apply, style = 'hierarchical', includeGrouped = false }) {
-  if (!apiKey) throw new Error('请先保存 DeepSeek API Key。');
+export async function runOrganizeWorkflow({ initialTabs, getLiveTabs, requestGroups, apply, style = 'hierarchical', includeGrouped = false }) {
 
   const plan = buildOrganizePlan(initialTabs, { includeGrouped });
   if (plan.aiTabs.length === 0 && plan.duplicateTabIds.length === 0) {
@@ -25,7 +24,7 @@ export async function runOrganizeWorkflow({ apiKey, initialTabs, getLiveTabs, re
 
   let groups = [];
   if (plan.aiTabs.length >= 2) {
-    const modelPayload = await requestGroups({ apiKey, tabs: plan.aiTabs });
+    const modelPayload = await requestGroups({ tabs: plan.aiTabs });
     groups = validateModelGroups(modelPayload, new Set(plan.aiTabs.map((tab) => tab.tabId)), { style });
   }
   if (groups.length === 0 && plan.duplicateTabIds.length === 0) {

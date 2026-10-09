@@ -23,10 +23,11 @@
 
       <section id="setup" hidden>
         <form id="keyForm">
-          <label for="apiKey">DeepSeek API Key</label>
+          <label id="apiKeyLabel" for="apiKey">DeepSeek API Key</label>
           <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴 API Key">
           <button class="primary" type="submit"><span>保存并开始使用</span><b>→</b></button>
         </form>
+        <button class="secondary" id="configureApi" type="button">选择其他 AI 服务</button>
       </section>
 
       <section id="ready" hidden>

@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "标签页整理",
-  "version": "1.3.2",
-  "description": "使用 DeepSeek 自动整理当前 Chrome 窗口的标签页。",
+  "version": "1.4.0",
+  "description": "使用 AI 自动整理当前 Chrome 窗口的标签页，支持 DeepSeek、OpenAI 兼容和 Anthropic API。",
   "minimum_chrome_version": "102",
   "permissions": ["tabs", "tabGroups", "storage"],
   "host_permissions": ["https://api.deepseek.com/*"],
+  "optional_host_permissions": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"],
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
