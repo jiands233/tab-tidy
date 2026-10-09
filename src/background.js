@@ -1,4 +1,4 @@
-import { requestTabGroups } from './deepseek.js';
+import { requestTabGroups } from './ai.js';
 import { OrganizerError } from './errors.js';
 import { applyOrganizePlan, finalizeUndoSnapshot, undoOrganize } from './organizer.js';
 import {
@@ -11,9 +11,11 @@ import {
 import { runOrganizeWorkflow } from './workflow.js';
 import { normalizeGroupingSettings } from './settings.js';
 import { canRestyleSnapshot, restyleOwnedGroups } from './appearance.js';
+import { API_CONFIG_KEY, LEGACY_API_KEY, readApiConfig, prepareApiConfig, validateApiConfig, isApiConfigured, isLocalApi, apiPermissionOrigin } from './ai-config.js';
 
 const STORAGE_KEYS = {
-  apiKey: 'deepseekApiKey',
+  apiConfig: API_CONFIG_KEY,
+  legacyApiKey: LEGACY_API_KEY,
   snapshot: 'lastOrganizeSnapshot',
   result: 'lastOrganizeResult',
   groupingLanguage: 'groupingLanguage',
@@ -48,6 +50,12 @@ function maskKey(key) {
   return key.length <= 8 ? '已保存' : `${key.slice(0, 4)}…${key.slice(-4)}`;
 }
 
+async function requireApiPermission(config) {
+  if (!await chrome.permissions.contains({ origins: [apiPermissionOrigin(config)] })) {
+    throw new OrganizerError('API_PERMISSION', '请在设置页保存 API 配置，并允许访问该服务地址。');
+  }
+}
+
 async function currentWindowTabs() {
   const tabs = await chrome.tabs.query({ lastFocusedWindow: true });
   if (tabs.length === 0) throw new Error('没有可整理的浏览器窗口。');
@@ -58,7 +66,8 @@ async function organizeCurrentWindow({ includeGrouped = false } = {}) {
   const lockToken = await acquireOrganizeLock(chrome.storage.session);
   const startedAt = Date.now();
   try {
-    const { [STORAGE_KEYS.apiKey]: apiKey } = await chrome.storage.local.get(STORAGE_KEYS.apiKey);
+    const config = validateApiConfig(readApiConfig(await chrome.storage.local.get([API_CONFIG_KEY, LEGACY_API_KEY])));
+    await requireApiPermission(config);
     const settings = normalizeGroupingSettings(await chrome.storage.local.get([
       STORAGE_KEYS.groupingLanguage,
       STORAGE_KEYS.groupingDetail,
@@ -77,7 +86,6 @@ async function organizeCurrentWindow({ includeGrouped = false } = {}) {
         tabIds: initialTabs.filter(tab => tab.groupId === group.id).map(tab => tab.id),
         originalTabs: initialTabs.filter(tab => tab.groupId === group.id).map(tab => ({ id: tab.id, url: tab.url, windowId: tab.windowId })) })) : [];
     const applied = await runOrganizeWorkflow({
-      apiKey,
       initialTabs,
       getLiveTabs: async () => {
         const liveTabs = await chrome.tabs.query({ windowId });
@@ -93,8 +101,8 @@ async function organizeCurrentWindow({ includeGrouped = false } = {}) {
         }
         return liveTabs;
       },
-      requestGroups: ({ apiKey: requestApiKey, tabs }) => requestTabGroups({
-        apiKey: requestApiKey,
+      requestGroups: ({ tabs }) => requestTabGroups({
+        config,
         tabs,
         language: settings.groupingLanguage,
         detail: settings.groupingDetail,
@@ -176,7 +184,8 @@ async function undoLastOrganize() {
 
 async function getStatus() {
   const values = await chrome.storage.local.get([
-    STORAGE_KEYS.apiKey,
+    STORAGE_KEYS.apiConfig,
+    STORAGE_KEYS.legacyApiKey,
     STORAGE_KEYS.snapshot,
     STORAGE_KEYS.result,
     STORAGE_KEYS.groupingLanguage,
@@ -190,10 +199,14 @@ async function getStatus() {
     await chrome.storage.local.remove(STORAGE_KEYS.snapshot);
     snapshot = null;
   }
+  const config = readApiConfig(values);
   return {
     runtimeVersion: chrome.runtime.getManifest().version,
-    hasApiKey: Boolean(values[STORAGE_KEYS.apiKey]),
-    maskedApiKey: values[STORAGE_KEYS.apiKey] ? maskKey(values[STORAGE_KEYS.apiKey]) : null,
+    apiConfig: { provider: config.provider, baseUrl: config.baseUrl, model: config.model },
+    isConfigured: isApiConfigured(config),
+    apiKeyOptional: isLocalApi(config.baseUrl),
+    hasApiKey: Boolean(config.apiKey),
+    maskedApiKey: config.apiKey ? maskKey(config.apiKey) : null,
     undoAvailable: Boolean(snapshot),
     canRestyle: isUndoSnapshotActive(snapshot) && canRestyleSnapshot(snapshot),
     undoExpiresAt: snapshot?.expiresAt || null,
@@ -207,15 +220,30 @@ async function handleMessage(message) {
   switch (message?.type) {
     case 'getStatus':
       return getStatus();
-    case 'saveApiKey': {
-      const apiKey = String(message.apiKey || '').trim();
-      if (!apiKey) throw new Error('请输入 DeepSeek API Key。');
-      await chrome.storage.local.set({ [STORAGE_KEYS.apiKey]: apiKey });
+    case 'saveApiConfig': {
+      const previous = readApiConfig(await chrome.storage.local.get([API_CONFIG_KEY, LEGACY_API_KEY]));
+      const config = prepareApiConfig(message.config, previous);
+      await requireApiPermission(config);
+      await chrome.storage.local.set({ [API_CONFIG_KEY]: config });
+      await chrome.storage.local.remove(LEGACY_API_KEY);
       return getStatus();
     }
-    case 'clearApiKey':
-      await chrome.storage.local.remove(STORAGE_KEYS.apiKey);
+    case 'saveApiKey': {
+      const previous = readApiConfig(await chrome.storage.local.get([API_CONFIG_KEY, LEGACY_API_KEY]));
+      const apiKey = String(message.apiKey || '').trim();
+      if (!apiKey) throw new Error('请输入 API Key。');
+      const config = validateApiConfig({ ...previous, apiKey });
+      await requireApiPermission(config);
+      await chrome.storage.local.set({ [API_CONFIG_KEY]: config });
+      await chrome.storage.local.remove(LEGACY_API_KEY);
       return getStatus();
+    }
+    case 'clearApiKey': {
+      const previous = readApiConfig(await chrome.storage.local.get([API_CONFIG_KEY, LEGACY_API_KEY]));
+      await chrome.storage.local.set({ [API_CONFIG_KEY]: { ...previous, apiKey: '' } });
+      await chrome.storage.local.remove(LEGACY_API_KEY);
+      return getStatus();
+    }
     case 'savePreferences': {
       const settings = normalizeGroupingSettings({
         groupingLanguage: message.groupingLanguage,

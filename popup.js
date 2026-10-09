@@ -45,8 +45,11 @@ function renderResult(lastResult, undoAvailable, isOrganizing) {
 async function render() {
   const status = await request({ type: 'getStatus' });
   const runtimeReady = status.runtimeVersion === chrome.runtime.getManifest().version;
-  setup.hidden = status.hasApiKey;
-  ready.hidden = !status.hasApiKey;
+  document.querySelector('#apiKeyLabel').textContent = (status.apiConfig?.provider || 'deepseek') === 'deepseek' ? 'DeepSeek API Key' : 'API Key';
+  const isConfigured = status.isConfigured ?? status.hasApiKey;
+  document.querySelector('#configureApi').hidden = isConfigured;
+  setup.hidden = isConfigured;
+  ready.hidden = !isConfigured;
   organizeButton.disabled = status.isOrganizing || !runtimeReady;
   includeGrouped.disabled = status.isOrganizing || !runtimeReady;
   organizeButton.querySelector('span').textContent = status.isOrganizing ? '正在整理…' : '开始整理';
@@ -120,3 +123,5 @@ chrome.storage.onChanged.addListener((_changes, areaName) => {
   if (areaName === 'local' || areaName === 'session') render().catch(() => {});
 });
 render().catch((error) => setFeedback(error.message));
+
+document.querySelector('#configureApi').addEventListener('click', () => chrome.runtime.openOptionsPage());

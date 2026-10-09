@@ -78,7 +78,7 @@ export function buildOrganizePlan(tabs, { includeGrouped = false } = {}) {
 
 export function validateModelGroups(payload, knownTabIds, { style = 'hierarchical' } = {}) {
   const invalid = () => {
-    throw new OrganizerError('AI_INVALID_RESPONSE', 'DeepSeek 返回的分组结果无效，本次未修改标签页。');
+    throw new OrganizerError('AI_INVALID_RESPONSE', 'AI 返回的分组结果无效，本次未修改标签页。');
   };
 
   if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !Array.isArray(payload.groups)) {

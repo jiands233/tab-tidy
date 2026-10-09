@@ -14,15 +14,21 @@
       <h1>整理偏好</h1>
       <section class="card">
         <div class="key-status">
-          <span>API Key</span>
+          <span>AI 服务</span>
           <p id="savedKey" class="saved-key"></p>
         </div>
         <form id="keyForm">
-          <label for="apiKey">替换 Key</label>
+          <label for="apiProvider">API 类型</label>
+          <select id="apiProvider"></select>
+          <label for="apiBaseUrl">API 地址</label>
+          <input id="apiBaseUrl" type="url" required spellcheck="false" autocomplete="off" placeholder="https://api.openai.com/v1">
+          <label for="apiModel">模型名称</label>
+          <input id="apiModel" type="text" required spellcheck="false" autocomplete="off" placeholder="填写服务提供的模型名称">
+          <label for="apiKey">API Key</label>
           <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴新的 API Key">
           <div class="actions">
-            <button class="save" type="submit">保存更改</button>
-            <button id="clearKey" class="danger" type="button">清除</button>
+            <button class="save" id="saveApi" type="submit" disabled>保存 API 配置</button>
+            <button id="clearKey" class="danger" type="button" disabled>清除 Key</button>
           </div>
         </form>
       </section>
