@@ -24,11 +24,11 @@
 
 **Tab Tidy** ist eine Chrome-Erweiterung mit Unterstützung für DeepSeek, OpenAI-kompatible APIs und Anthropic APIs. Sie gruppiert Web-Tabs im aktuellen Fenster nach Themen, entfernt doppelte Seiten und ermöglicht das Rückgängigmachen. Die Gruppen erscheinen direkt in der nativen Tab-Leiste von Chrome.
 
-Aktuelle Quellcodeversion: **v1.4.0**. Erforderlich sind **Chrome 102+** und ein **API-Key des gewählten Dienstes**; bei lokalen Diensten kann der Key entfallen. Die Erweiterung ruft die konfigurierte API direkt auf, ohne eigenen Proxyserver.
+Aktuelle Quellcodeversion: **v1.4.1**. Erforderlich sind **Chrome 102+** und ein **API-Key des gewählten Dienstes**; bei lokalen Diensten kann der Key entfallen. Die Erweiterung ruft die konfigurierte API direkt auf, ohne eigenen Proxyserver.
 
 ## Schnellstart
 
-1. [Erweiterung v1.4.0 als ZIP herunterladen](https://github.com/jiands233/tab-tidy/releases/download/v1.4.0/tab-tidy-v1.4.0.zip) und entpacken oder dieses Repository klonen.
+1. [Erweiterung v1.4.1 als ZIP herunterladen](https://github.com/jiands233/tab-tidy/releases/download/v1.4.1/tab-tidy-v1.4.1.zip) und entpacken oder dieses Repository klonen.
 2. `chrome://extensions` öffnen und den **Entwicklermodus** aktivieren.
 3. **Entpackte Erweiterung laden** wählen und den Ordner mit `manifest.json` auswählen.
 4. Tab Tidy über die Chrome-Symbolleiste öffnen. Für den voreingestellten DeepSeek-Dienst den Key eingeben und auf **保存并开始使用** (Speichern und starten) klicken. Für andere Dienste **选择其他 AI 服务** (Anderen KI-Dienst wählen) anklicken.
@@ -149,6 +149,15 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 ```
 
 Das Erstellen der ZIP-Datei lädt sie nicht automatisch in den Store hoch und veröffentlicht sie nicht.
+
+</details>
+
+<details>
+<summary>Neu in v1.4.1</summary>
+
+- Popup und Einstellungen mit Tabumfang, Ergebnisstatistik und Live-Vorschau überarbeitet.
+- Gespeicherte und ungespeicherte Änderungen, Key-Anzeige und Bestätigung beim Löschen ergänzt.
+- Behoben: Das Speichern der API-Konfiguration verwirft keine ungespeicherten Gruppierungseinstellungen mehr.
 
 </details>
 

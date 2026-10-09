@@ -1,59 +1,57 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>标签页整理设置</title>
-    <link rel="stylesheet" href="options.css">
-  </head>
-  <body>
-    <main>
-      <header>
-        <img class="brand-mark" src="assets/icon-48.png" alt="">
-      </header>
-      <h1>整理偏好</h1>
-      <section class="card">
-        <div class="key-status">
-          <span>AI 服务</span>
-          <p id="savedKey" class="saved-key"></p>
-        </div>
-        <form id="keyForm">
-          <label for="apiProvider">API 类型</label>
-          <select id="apiProvider"></select>
-          <label for="apiBaseUrl">API 地址</label>
-          <input id="apiBaseUrl" type="url" required spellcheck="false" autocomplete="off" placeholder="https://api.openai.com/v1">
-          <label for="apiModel">模型名称</label>
-          <input id="apiModel" type="text" required spellcheck="false" autocomplete="off" placeholder="填写服务提供的模型名称">
-          <label for="apiKey">API Key</label>
-          <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴新的 API Key">
-          <div class="actions">
-            <button class="save" id="saveApi" type="submit" disabled>保存 API 配置</button>
-            <button id="clearKey" class="danger" type="button" disabled>清除 Key</button>
-          </div>
-        </form>
-      </section>
-      <section class="card">
-        <div class="section-heading">
-          <h2>分组规则</h2>
-        </div>
-        <label for="groupingLanguage">命名语言</label>
-        <select id="groupingLanguage"></select>
-        <label for="groupingDetail">分组细致度</label>
-        <select id="groupingDetail"></select>
-        <label for="groupingStyle">命名形式</label>
-        <select id="groupingStyle"></select>
-        <label class="palette-label" for="groupingPalette">标签组配色</label>
-        <select id="groupingPalette"></select>
-        <div id="singleColorRow" hidden>
-          <label for="groupingColor">所有分组统一使用</label>
-          <select id="groupingColor"></select>
-        </div>
-        <div class="group-preview" id="groupPreview" aria-label="分组外观示例"></div>
-        <button class="save full-width" id="savePreferences" type="button" disabled>保存分组规则</button>
-        <button class="apply-appearance full-width" id="restyleGroups" type="button" disabled>保存并更新上次分组的外观</button>
-      </section>
-      <p id="feedback" role="status" aria-live="polite"></p>
-    </main>
-    <script type="module" src="options.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tab Tidy · 设置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+<main>
+  <header class="page-header"><div class="brand-lockup"><img class="brand-mark" src="assets/icon-48.png" alt=""><span>Tab Tidy</span></div><span class="header-label">设置</span></header>
+  <div class="page-heading"><h1>按你的习惯整理。</h1><p>连接 AI 服务，再选择喜欢的分组方式。</p></div>
+  <nav class="tabs" role="tablist" aria-label="设置分类">
+    <button id="apiTab" type="button" role="tab" aria-selected="true" aria-controls="apiPanel">AI 服务</button>
+    <button id="rulesTab" type="button" role="tab" aria-selected="false" aria-controls="rulesPanel" tabindex="-1">分组与外观</button>
+  </nav>
+  <section id="apiPanel" role="tabpanel" aria-labelledby="apiTab">
+    <div class="card">
+      <div class="section-heading"><div><h2>连接 AI 服务</h2><p>使用你自己的 API 地址和 Key。</p></div><span id="apiState" class="state-badge">读取中</span></div>
+      <form id="keyForm">
+        <div class="connection-grid"><div class="field"><label for="apiProvider">API 类型</label><select id="apiProvider"></select></div><div class="field"><label for="apiModel">模型名称</label><input id="apiModel" type="text" required spellcheck="false" autocomplete="off" aria-describedby="modelHint" placeholder="填写服务提供的模型名称"><p class="field-hint" id="modelHint">使用该服务支持的模型名称。</p></div></div>
+        <div class="field"><label for="apiBaseUrl">API 地址</label><input id="apiBaseUrl" type="url" required spellcheck="false" autocomplete="off" aria-describedby="endpointHint" placeholder="https://api.openai.com/v1"><p class="field-hint" id="endpointHint">填写服务提供的 API 地址。</p></div>
+
+        <div class="field"><div class="label-row"><label for="apiKey">API Key</label><span id="savedKey" class="saved-key"></span></div><div class="password-field"><input id="apiKey" type="password" autocomplete="off" spellcheck="false" aria-describedby="keyHint" placeholder="粘贴新的 API Key"><button id="toggleKey" type="button" aria-label="显示 API Key" aria-pressed="false">显示</button></div><p class="field-hint" id="keyHint">Key 仅保存在当前设备。</p></div>
+        <div class="card-footer"><button class="save" id="saveApi" type="submit" disabled>保存 API 配置</button><button id="clearKey" class="text-button danger" type="button" disabled>清除 Key</button></div>
+      </form>
+      <p id="apiFeedback" class="feedback" role="status" aria-live="polite" hidden></p>
+      <button id="nextStep" class="next-step" type="button" hidden>已保存，继续调整分组与外观 <span aria-hidden="true">→</span></button>
+    </div>
+    <p class="page-note">直接连接所选服务 · 不读取网页正文</p>
+  </section>
+  <section id="rulesPanel" role="tabpanel" aria-labelledby="rulesTab" hidden>
+    <div class="rules-layout">
+      <div class="card rules-card">
+        <div class="section-heading"><div><h2>分组规则</h2><p>让主题、名字和颜色符合你的习惯。</p></div><span id="rulesState" class="state-badge">读取中</span></div>
+        <div class="field"><label for="groupingLanguage">命名语言</label><select id="groupingLanguage"></select></div>
+        <div class="field"><label for="groupingDetail">分组细致度</label><select id="groupingDetail"></select></div>
+        <div class="field"><label for="groupingStyle">命名形式</label><select id="groupingStyle"></select></div>
+        <div class="field"><label for="groupingPalette">标签组配色</label><select id="groupingPalette"></select></div>
+        <div class="field" id="singleColorRow" hidden><label for="groupingColor">所有分组统一使用</label><select id="groupingColor"></select></div>
+        <div class="card-footer"><button class="save" id="savePreferences" type="button" disabled>保存分组规则</button></div>
+        <p id="rulesFeedback" class="feedback" role="status" aria-live="polite" hidden></p>
+      </div>
+      <aside class="preview-card" aria-label="分组预览">
+        <div class="preview-heading"><span>外观预览</span><span class="preview-indicator">实时更新</span></div>
+        <div class="browser-preview"><div class="browser-bar"><i></i><i></i><i></i></div><div id="groupPreview" class="group-preview" aria-label="分组外观示例"></div></div>
+        <p class="preview-caption">名称与颜色示例，实际分组由页面内容决定。</p>
+        <div class="appearance-action"><h3>更新最近一次分组</h3><p id="restyleHint">整理后 30 分钟内，可直接应用新的外观。</p><button class="apply-appearance" id="restyleGroups" type="button" disabled>保存并更新上次分组的外观</button></div>
+      </aside>
+    </div>
+  </section>
+  <p id="feedback" class="feedback global-feedback" role="status" aria-live="polite" hidden></p>
+  <footer class="page-footer"><span>Tab Tidy</span><span id="version"></span></footer>
+</main>
+<script type="module" src="options.js"></script>
+</body>
 </html>

@@ -24,11 +24,11 @@
 
 **Tab Tidy** is a Chrome extension supporting DeepSeek, OpenAI-compatible APIs, and Anthropic APIs. It groups web tabs in your current window by topic, removes duplicate pages, and lets you undo the result. Groups appear directly in Chrome's native tab bar.
 
-Current source version: **v1.4.0**. Requires **Chrome 102+** and an **API key for your chosen service**; local services can omit the key. The extension calls your configured API directly, with no application proxy server.
+Current source version: **v1.4.1**. Requires **Chrome 102+** and an **API key for your chosen service**; local services can omit the key. The extension calls your configured API directly, with no application proxy server.
 
 ## Quick start
 
-1. [Download the v1.4.0 extension ZIP](https://github.com/jiands233/tab-tidy/releases/download/v1.4.0/tab-tidy-v1.4.0.zip) and extract it, or clone this repository.
+1. [Download the v1.4.1 extension ZIP](https://github.com/jiands233/tab-tidy/releases/download/v1.4.1/tab-tidy-v1.4.1.zip) and extract it, or clone this repository.
 2. Open `chrome://extensions` and enable **Developer mode**.
 3. Click **Load unpacked** and choose the folder containing `manifest.json`.
 4. Open Tab Tidy from the Chrome toolbar. For the default DeepSeek service, enter your key and click **保存并开始使用** (Save and get started). For another service, click **选择其他 AI 服务** (Choose another AI service).
@@ -149,6 +149,15 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 ```
 
 Creating the ZIP does not upload or publish it to the store.
+
+</details>
+
+<details>
+<summary>What's new in v1.4.1</summary>
+
+- Refined the popup and Settings with tab scope, result statistics, and a live appearance preview.
+- Added saved and unsaved states, key visibility controls, and confirmation before clearing a key.
+- Fixed API configuration saves discarding unsaved grouping preferences.
 
 </details>
 

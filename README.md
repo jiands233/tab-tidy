@@ -24,11 +24,11 @@
 
 **Tab Tidy（标签页整理）** 是一个支持 DeepSeek、OpenAI 兼容接口和 Anthropic 接口的 Chrome 扩展：按主题归组当前窗口的网页，清理重复页面，并支持撤销。分组直接显示在 Chrome 原生标签栏中。
 
-当前源码版本 **v1.4.0**。需要 **Chrome 102+** 和所选服务的 **API Key**；本机服务可不填 Key。扩展直接请求你配置的 API 地址，无自建中转服务器。
+当前源码版本 **v1.4.1**。需要 **Chrome 102+** 和所选服务的 **API Key**；本机服务可不填 Key。扩展直接请求你配置的 API 地址，无自建中转服务器。
 
 ## 快速开始
 
-1. [下载 v1.4.0 安装包](https://github.com/jiands233/tab-tidy/releases/download/v1.4.0/tab-tidy-v1.4.0.zip) 并解压，或克隆本仓库。
+1. [下载 v1.4.1 安装包](https://github.com/jiands233/tab-tidy/releases/download/v1.4.1/tab-tidy-v1.4.1.zip) 并解压，或克隆本仓库。
 2. 打开 `chrome://extensions`，开启右上角的 **开发者模式**。
 3. 点击 **加载已解压的扩展程序**，选择包含 `manifest.json` 的文件夹。
 4. 在 Chrome 工具栏打开 Tab Tidy。使用默认 DeepSeek 时，输入 Key 并点击 **保存并开始使用**；使用其他服务时，点击 **选择其他 AI 服务** 完成配置。
@@ -149,6 +149,15 @@ zip -r tab-tidy.zip manifest.json popup.html popup.css popup.js options.html opt
 ```
 
 创建 ZIP 不会自动上传或发布到商店。
+
+</details>
+
+<details>
+<summary>v1.4.1 更新说明</summary>
+
+- 重绘弹窗与设置页，补充整理范围、结果统计和实时外观预览。
+- 区分已保存与未保存状态，支持 Key 显隐和清除确认。
+- 修复保存 API 配置时覆盖未保存分组偏好的问题。
 
 </details>
 
