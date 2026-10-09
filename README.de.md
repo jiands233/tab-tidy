@@ -28,7 +28,7 @@ Aktuelle Quellcodeversion: **v1.4.0**. Erforderlich sind **Chrome 102+** und ein
 
 ## Schnellstart
 
-1. [Quellcode als ZIP herunterladen](https://github.com/jiands233/tab-tidy/archive/refs/heads/main.zip) und entpacken oder dieses Repository klonen.
+1. [Erweiterung v1.4.0 als ZIP herunterladen](https://github.com/jiands233/tab-tidy/releases/download/v1.4.0/tab-tidy-v1.4.0.zip) und entpacken oder dieses Repository klonen.
 2. `chrome://extensions` öffnen und den **Entwicklermodus** aktivieren.
 3. **Entpackte Erweiterung laden** wählen und den Ordner mit `manifest.json` auswählen.
 4. Tab Tidy über die Chrome-Symbolleiste öffnen. Für den voreingestellten DeepSeek-Dienst den Key eingeben und auf **保存并开始使用** (Speichern und starten) klicken. Für andere Dienste **选择其他 AI 服务** (Anderen KI-Dienst wählen) anklicken.

@@ -28,7 +28,7 @@
 
 ## 快速开始
 
-1. [下载源码 ZIP](https://github.com/jiands233/tab-tidy/archive/refs/heads/main.zip) 并解压，或克隆本仓库。
+1. [下载 v1.4.0 安装包](https://github.com/jiands233/tab-tidy/releases/download/v1.4.0/tab-tidy-v1.4.0.zip) 并解压，或克隆本仓库。
 2. 打开 `chrome://extensions`，开启右上角的 **开发者模式**。
 3. 点击 **加载已解压的扩展程序**，选择包含 `manifest.json` 的文件夹。
 4. 在 Chrome 工具栏打开 Tab Tidy。使用默认 DeepSeek 时，输入 Key 并点击 **保存并开始使用**；使用其他服务时，点击 **选择其他 AI 服务** 完成配置。

@@ -28,7 +28,7 @@ Current source version: **v1.4.0**. Requires **Chrome 102+** and an **API key fo
 
 ## Quick start
 
-1. [Download the source ZIP](https://github.com/jiands233/tab-tidy/archive/refs/heads/main.zip) and extract it, or clone this repository.
+1. [Download the v1.4.0 extension ZIP](https://github.com/jiands233/tab-tidy/releases/download/v1.4.0/tab-tidy-v1.4.0.zip) and extract it, or clone this repository.
 2. Open `chrome://extensions` and enable **Developer mode**.
 3. Click **Load unpacked** and choose the folder containing `manifest.json`.
 4. Open Tab Tidy from the Chrome toolbar. For the default DeepSeek service, enter your key and click **保存并开始使用** (Save and get started). For another service, click **选择其他 AI 服务** (Choose another AI service).
